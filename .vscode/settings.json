@@ -1,3 +1,96 @@
 {
-    "dotnet.preferCSharpExtension": true
+    "dotnet.preferCSharpExtension": true,
+    
+    "files.exclude": {
+        // Unity generated folders
+        "Library/": true,
+        "Temp/": true,
+        "Logs/": true,
+        "obj/": true,
+        "UserSettings/": true,
+        
+        // Unity cache and temporary files
+        "**/*.tmp": true,
+        "**/*.temp": true,
+        "**/*.log": true,
+        "**/*.cache": true,
+        
+        // Unity meta files
+        "**/*.meta": true,
+        
+        // Build output
+        "Builds/": true,
+        "Build/": true,
+        
+        // IDE specific
+        "**/*.csproj": true,
+        "**/*.sln": true,
+        "**/*.csproj.DotSettings": true,
+        
+        // Version control
+        ".git/": true,
+        ".gitignore": false,
+        
+        // OS specific
+        ".DS_Store": true,
+        "Thumbs.db": true,
+        "Desktop.ini": true
+    },
+    
+    "search.exclude": {
+        // Same exclusions for search
+        "Library/": true,
+        "Temp/": true,
+        "Logs/": true,
+        "obj/": true,
+        "UserSettings/": true,
+        "**/*.tmp": true,
+        "**/*.temp": true,
+        "**/*.log": true,
+        "**/*.cache": true,
+        "Builds/": true,
+        "Build/": true,
+        "**/*.csproj": true,
+        "**/*.sln": true,
+        "**/*.csproj.DotSettings": true,
+        ".git/": true,
+        ".DS_Store": true,
+        "Thumbs.db": true,
+        "Desktop.ini": true
+    },
+    
+    "files.watcherExclude": {
+        // Exclude from file watcher to improve performance
+        "Library/**": true,
+        "Temp/**": true,
+        "Logs/**": true,
+        "obj/**": true,
+        "UserSettings/**": true,
+        "**/*.tmp": true,
+        "**/*.temp": true,
+        "**/*.log": true,
+        "**/*.cache": true
+    },
+    
+    // Unity specific settings
+    "omnisharp.useGlobalMono": "never",
+    "omnisharp.useModernNet": true,
+    "dotnet.completion.showCompletionItemsFromUnimportedNamespaces": false,
+    
+    // File associations
+    "files.associations": {
+        "*.cs": "csharp",
+        "*.shader": "hlsl",
+        "*.hlsl": "hlsl",
+        "*.cginc": "hlsl",
+        "*.compute": "hlsl"
+    },
+    
+    // Editor settings for Unity C# files
+    "editor.tabSize": 4,
+    "editor.insertSpaces": false,
+    "editor.detectIndentation": false,
+    
+    // Exclude from problems view
+    "problems.decorations.enabled": true
 }
