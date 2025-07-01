@@ -60,7 +60,6 @@ namespace PhysicsCharacterController
         public float gravityMultiplierOnSlideChange = 3f;
         [Tooltip("Multiplier factor for gravity used on non climbable slope")]
         public float gravityMultiplierIfUnclimbableSlope = 30f;
-        [Space(10)]
 
         [Header("Wall slide")]
         [Tooltip("Distance from the player head used to check if the player is touching a wall")]
@@ -145,7 +144,7 @@ namespace PhysicsCharacterController
         private float _jumpBufferTimer;
         private bool _hasJumpBuffered;
 
-        private bool _shouldStartCoyoteTime => !_isGrounded && _prevIsGrounded && !_isJumping;
+        private bool ShouldStartCoyoteTime => !_isGrounded && _prevIsGrounded && !_isJumping;
 		private bool _hasCoyoteTime;
 		private float _coyoteTimeCounter;
 
@@ -419,6 +418,7 @@ namespace PhysicsCharacterController
                 _isJumping = true;
                 _jumpUpTimer = 0f;
                 _yPosBeforeJump = _rigidbody.position.y;
+                _rigidbody.linearVelocity = new Vector3(_rigidbody.linearVelocity.x, 0f, _rigidbody.linearVelocity.z);
             }
         }
 
@@ -459,7 +459,7 @@ namespace PhysicsCharacterController
 
 		private void HandleCoyoteTime()
 		{
-			if (_shouldStartCoyoteTime)
+			if (ShouldStartCoyoteTime)
 			{
 				_hasCoyoteTime = true;
 				_coyoteTimeCounter = coyoteTime;
@@ -642,25 +642,25 @@ namespace PhysicsCharacterController
             }
 
             //avoid little jump
-            // if (!Mathf.Approximately(_groundNormal.y, 1) && _groundNormal.y != 0 && _isTouchingSlope && _prevGroundNormal != _groundNormal)
-            // {
-            //     //Debug.Log("Added correction jump on slope");
-            //     gravity *= gravityMultiplierOnSlideChange;
-            // }
+            if (!Mathf.Approximately(_groundNormal.y, 1) && _groundNormal.y != 0 && _isTouchingSlope && _prevGroundNormal != _groundNormal)
+            {
+                //Debug.Log("Added correction jump on slope");
+                gravity *= gravityMultiplierOnSlideChange;
+            }
 
-            // //slide if angle too big
-            // if (!Mathf.Approximately(_groundNormal.y, 1) && _groundNormal.y != 0 && _currentSurfaceAngle > maxClimbableSlopeAngle && !_isTouchingStep)
-            // {
-            //     if (_currentSurfaceAngle is > 0f and <= 30f)
-            //     {
-            //         gravity = _globalDown * (gravityMultiplierIfUnclimbableSlope * -Physics.gravity.y);
-            //     }
-            //     else if (_currentSurfaceAngle is > 30f and <= 89f)
-            //     {
-            //         gravity = _globalDown * (gravityMultiplierIfUnclimbableSlope * 0.5f * -Physics.gravity.y);
-            //     }
-            // }
-
+            //slide if angle too big
+            if (!Mathf.Approximately(_groundNormal.y, 1) && _groundNormal.y != 0 && _currentSurfaceAngle > maxClimbableSlopeAngle && !_isTouchingStep)
+            {
+                if (_currentSurfaceAngle is > 0f and <= 30f)
+                {
+                    gravity = _globalDown * (gravityMultiplierIfUnclimbableSlope * -Physics.gravity.y);
+                }
+                else if (_currentSurfaceAngle is > 30f and <= 89f)
+                {
+                    gravity = _globalDown * (gravityMultiplierIfUnclimbableSlope * 0.5f * -Physics.gravity.y);
+                }
+            }
+            
             _rigidbody.AddForce(gravity);
         }
         #endregion
