@@ -28,10 +28,12 @@ namespace PhysicsCharacterController
         [Tooltip("FP camera head height when crouching")]
         public Vector3 povCrouchHeadHeight = new(0f, -0.1f, -0.1f);
         
-        [Header("Jump and gravity")]
+        [Header("Jump")]
         [SerializeField] private float maxJumpHeight = 2f;
         [SerializeField] private float timeToReachMaxJumpHeightInSeconds = 0.5f;
         [SerializeField] private AnimationCurve jumpCurve;
+        [Tooltip("Time window in seconds to buffer jump input when not grounded")]
+        [SerializeField] private float jumpBufferTime = 0.2f;
 
         [Header("Slope and step")]
         [Tooltip("Distance from the player feet used to check if the player is touching the ground")]
@@ -138,6 +140,9 @@ namespace PhysicsCharacterController
         private float _jumpUpTimer;
         private float _yPosBeforeJump;
         private bool _isJumping;
+        
+        private float _jumpBufferTimer;
+        private bool _hasJumpBuffered;
 
         private void Awake()
         {
@@ -155,6 +160,8 @@ namespace PhysicsCharacterController
             _jumpInput = input.jump;
             _sprintInput = input.sprint;
             _crouchInput = input.crouch;
+            
+            HandleJumpBuffer();
         }
 
         private void FixedUpdate()
@@ -367,6 +374,75 @@ namespace PhysicsCharacterController
         }
         #endregion
 
+        #region Jump Buffer
+        private void HandleJumpBuffer()
+        {
+            // If jump input is pressed
+            if (_jumpInput)
+            {
+                if (_isGrounded && CanJump())
+                {
+                    // Normal jump - player is grounded and can jump
+                    ExecuteJump();
+                }
+                else if (!_isGrounded)
+                {
+                    // Player is not grounded, start jump buffer
+                    _hasJumpBuffered = true;
+                    _jumpBufferTimer = 0f;
+                }
+            }
+            
+            // Update jump buffer timer if buffered
+            if (_hasJumpBuffered && !_isGrounded)
+            {
+                _jumpBufferTimer += Time.deltaTime;
+                
+                // Clear buffer if time exceeded
+                if (_jumpBufferTimer > jumpBufferTime)
+                {
+                    _hasJumpBuffered = false;
+                    _jumpBufferTimer = 0f;
+                }
+            }
+            
+            // Check if player just landed and has buffered jump
+            if (_hasJumpBuffered && _isGrounded && !_prevIsGrounded && CanJump())
+            {
+                // Execute buffered jump
+                ExecuteJump();
+                _hasJumpBuffered = false;
+                _jumpBufferTimer = 0f;
+            }
+            
+            // Clear buffer if player lands but buffer expired
+            if (_isGrounded && !_prevIsGrounded)
+            {
+                if (!_hasJumpBuffered || _jumpBufferTimer > jumpBufferTime)
+                {
+                    _hasJumpBuffered = false;
+                    _jumpBufferTimer = 0f;
+                }
+            }
+        }
+        
+        private bool CanJump()
+        {
+            return (_isTouchingSlope && _currentSurfaceAngle <= maxClimbableSlopeAngle || 
+                    !_isTouchingSlope || _isTouchingStep) && !_isTouchingWall;
+        }
+        
+        private void ExecuteJump()
+        {
+            if (!_isJumping)
+            {
+                _isJumping = true;
+                _jumpUpTimer = 0f;
+                _yPosBeforeJump = _rigidbody.position.y;
+            }
+        }
+        #endregion
+
         #region Movement
         private void HandleCrouchModel()
         {
@@ -495,18 +571,6 @@ namespace PhysicsCharacterController
 
         private void Jump()
         {
-            //jumped
-            if (_jumpInput && _isGrounded &&
-                (_isTouchingSlope && _currentSurfaceAngle <= maxClimbableSlopeAngle || !_isTouchingSlope || _isTouchingStep) && !_isTouchingWall)
-            {
-                if (!_isJumping)
-                {
-                    _isJumping = true;
-                    _jumpUpTimer = 0f;
-                    _yPosBeforeJump = _rigidbody.position.y;
-                }
-            }
-
             //TODO: add ceiling check
             if (_isJumping)
             {
@@ -569,8 +633,8 @@ namespace PhysicsCharacterController
         #region Events
         private void UpdateEvents()
         {
-            if (_jumpInput && _isGrounded && (_isTouchingSlope && _currentSurfaceAngle <= maxClimbableSlopeAngle ||
-                                         !_isTouchingSlope) ||
+            if ((_jumpInput && _isGrounded && CanJump()) || 
+                (_hasJumpBuffered && _isGrounded && !_prevIsGrounded && CanJump()) ||
                 (_jumpInput && !_isGrounded && _isTouchingWall)) onJump.Invoke();
             if (_isGrounded && !_prevIsGrounded && _rigidbody.linearVelocity.y > -minimumVerticalSpeedToLandEvent)
                 onLand.Invoke();
