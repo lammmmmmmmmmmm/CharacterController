@@ -49,24 +49,13 @@ namespace PhysicsCharacterController
         public float slopeCheckerThreshold = 0.51f;
         [Tooltip("Distance from the player center used to check if the player is touching a step")]
         public float stepCheckerThreshold = 0.6f;
-        [Space(10)]
         [Range(1f, 89f)]
         [Tooltip("Max climbable slope angle")]
         public float maxClimbableSlopeAngle = 53.6f;
         [Tooltip("Max climbable step height")]
         public float maxStepHeight = 0.74f;
-        [Space(10)]
-        [Tooltip("Speed multiplier based on slope angle")]
-        public AnimationCurve speedMultiplierOnAngle = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
-        [Range(0.01f, 1f)]
-        [Tooltip("Multiplier factor on climbable slope")]
-        public float canSlideMultiplierCurve = 0.061f;
-        [Range(0.01f, 1f)]
-        [Tooltip("Multiplier factor on non climbable slope")]
-        public float cantSlideMultiplierCurve = 0.039f;
-        [Range(0.01f, 1f)]
-        [Tooltip("Multiplier factor on step")]
-        public float climbingStairsMultiplierCurve = 0.637f;
+        [Tooltip("Animation curve for slope speed reduction based on angle (0-90 degrees)")]
+        public AnimationCurve slopeSpeedCurve = AnimationCurve.Linear(0f, 1f, 90f, 0.3f);
         
         [Space(10)]
         [Tooltip("Multiplier factor for gravity")]
@@ -353,60 +342,30 @@ namespace PhysicsCharacterController
                 }
                 else
                 {
-                    // slope - calculate angle first
+                    // slope
                     _currentSurfaceAngle = Vector3.Angle(Vector3.up, slopeHit.normal);
                     _isTouchingSlope = true;
                     
-                    Vector3 tmpGlobalForward = transform.forward.normalized;
-                    Vector3 tmpForward = new Vector3(tmpGlobalForward.x,
+                    _globalForward = transform.forward.normalized;
+                    _forward = new Vector3(_globalForward.x,
                         Vector3.ProjectOnPlane(transform.forward.normalized, slopeHit.normal).normalized.y,
-                        tmpGlobalForward.z);
-                    Vector3 tmpReactionForward =
-                        new Vector3(tmpForward.x, tmpGlobalForward.y - tmpForward.y, tmpForward.z);
+                        _globalForward.z);
+                    _reactionForward = new Vector3(_forward.x, _globalForward.y - _forward.y, _forward.z);
 
                     if (_currentSurfaceAngle <= maxClimbableSlopeAngle && !_isTouchingStep)
                     {
-                        // walkable slope
-                        _forward = tmpForward * (speedMultiplierOnAngle.Evaluate(_currentSurfaceAngle / 90f) *
-                            canSlideMultiplierCurve + 1f);
-                        _globalForward = tmpGlobalForward *
-                                         (speedMultiplierOnAngle.Evaluate(_currentSurfaceAngle / 90f) *
-                                             canSlideMultiplierCurve + 1f);
-                        _reactionForward = tmpReactionForward *
-                                           (speedMultiplierOnAngle.Evaluate(_currentSurfaceAngle / 90f) *
-                                               canSlideMultiplierCurve + 1f);
-
                         SetFriction(frictionAgainstFloor, true);
                         _currentLockOnSlope = lockOnSlope;
                     }
                     else if (_isTouchingStep)
                     {
-                        _forward = tmpForward * (speedMultiplierOnAngle.Evaluate(_currentSurfaceAngle / 90f) *
-                            climbingStairsMultiplierCurve + 1f);
-                        _globalForward = tmpGlobalForward *
-                                         (speedMultiplierOnAngle.Evaluate(_currentSurfaceAngle / 90f) *
-                                             climbingStairsMultiplierCurve + 1f);
-                        _reactionForward = tmpReactionForward *
-                                           (speedMultiplierOnAngle.Evaluate(_currentSurfaceAngle / 90f) *
-                                               climbingStairsMultiplierCurve + 1f);
-
                         SetFriction(frictionAgainstFloor, true);
                         _currentLockOnSlope = true;
                     }
                     else
                     {
-                        // unwalkable slope
-                        _forward = tmpForward * (speedMultiplierOnAngle.Evaluate(_currentSurfaceAngle / 90f) *
-                            cantSlideMultiplierCurve + 1f);
-                        _globalForward = tmpGlobalForward *
-                                         (speedMultiplierOnAngle.Evaluate(_currentSurfaceAngle / 90f) *
-                                             cantSlideMultiplierCurve + 1f);
-                        _reactionForward = tmpReactionForward *
-                                           (speedMultiplierOnAngle.Evaluate(_currentSurfaceAngle / 90f) *
-                                               cantSlideMultiplierCurve + 1f);
-
                         SetFriction(0f, true);
-                        _currentLockOnSlope = lockOnSlope;
+                        _currentLockOnSlope = false;
                     }
                 }
 
@@ -476,6 +435,33 @@ namespace PhysicsCharacterController
 
                 // Calculate target velocity based on sprint state
                 float targetSpeed = _sprintInput ? sprintSpeed : movementSpeed;
+                
+                // Apply slope speed reduction when going up slopes
+                float finalSlopeMultiplier = 1f;
+                if (_isTouchingSlope && !_isTouchingStep)
+                {
+                    Vector3 intendedDirection = Quaternion.Euler(0f, targetAngle, 0f) * Vector3.forward;
+                    Vector3 horizontalIntendedDirection = Vector3.ProjectOnPlane(intendedDirection, Vector3.up).normalized;
+                    Vector3 horizontalSlopeDirection = Vector3.ProjectOnPlane(-_groundNormal, Vector3.up).normalized;
+                    float dotProduct = Vector3.Dot(horizontalIntendedDirection, horizontalSlopeDirection);
+
+                    // If moving up the slope (dotProduct > 0), apply speed reduction
+                    if (dotProduct > 0.1f)
+                    {
+                        if (_currentSurfaceAngle <= maxClimbableSlopeAngle)
+                        {
+                            finalSlopeMultiplier = slopeSpeedCurve.Evaluate(_currentSurfaceAngle);
+                        }
+
+                        if (_currentSurfaceAngle > maxClimbableSlopeAngle)
+                        {
+                            _currentSpeed = 0f;
+                            targetSpeed = 0f;
+                        }
+                    }
+                }
+                
+                targetSpeed *= finalSlopeMultiplier * crouchMultiplier;
                 _previousTargetSpeed = targetSpeed;
                 
                 if (!_isAccelerating)
@@ -484,28 +470,7 @@ namespace PhysicsCharacterController
                 }
 
                 _currentSpeed = Mathf.MoveTowards(_currentSpeed, targetSpeed, acceleration * Time.fixedDeltaTime);
-                Vector3 targetVelocity = _forward * _currentSpeed * crouchMultiplier;
-
-                // Prevent movement up unwalkable slopes
-                if (_isTouchingSlope && _currentSurfaceAngle > maxClimbableSlopeAngle && !_isTouchingStep)
-                {
-                    Vector3 intendedDirection = Quaternion.Euler(0f, targetAngle, 0f) * Vector3.forward;
-
-                    // Project the intended direction onto the horizontal plane
-                    Vector3 horizontalIntendedDirection = Vector3.ProjectOnPlane(intendedDirection, Vector3.up).normalized;
-
-                    // Project the slope normal onto the horizontal plane to get slope direction
-                    Vector3 horizontalSlopeDirection = Vector3.ProjectOnPlane(-_groundNormal, Vector3.up).normalized;
-
-                    // Check if the player is trying to move up the slope
-                    float dotProduct = Vector3.Dot(horizontalIntendedDirection, horizontalSlopeDirection);
-
-                    if (dotProduct > 0.1f) // Player is trying to move up the slope
-                    {
-                        _currentSpeed = 0f;
-                        targetVelocity = Vector3.zero;
-                    }
-                }
+                Vector3 targetVelocity = _forward * _currentSpeed;
 
                 _rigidbody.linearVelocity = new Vector3(targetVelocity.x, _rigidbody.linearVelocity.y, targetVelocity.z);
             }
@@ -517,7 +482,7 @@ namespace PhysicsCharacterController
                 }
 
                 _currentSpeed = Mathf.MoveTowards(_currentSpeed, 0f, deceleration * Time.fixedDeltaTime);
-                Vector3 targetVelocity = _forward * _currentSpeed * crouchMultiplier;
+                Vector3 targetVelocity = _forward * _currentSpeed;
                 
                 _rigidbody.linearVelocity = new Vector3(targetVelocity.x, _rigidbody.linearVelocity.y, targetVelocity.z);
             }
