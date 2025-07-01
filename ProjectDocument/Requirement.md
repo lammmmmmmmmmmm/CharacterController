@@ -6,32 +6,32 @@
 - Zoom
 
 ## Jump
-- Hold to jump higher
-- Jump buffer
-- Coyote time
-- Max height
-- Time to reach max height
+- [ ] Hold to jump higher
+- [ ] Jump buffer
+- [ ] Coyote time
+- [x] Max height
+- [x] Time to reach max height
   - Animation curve
-- Time to fall
+- [ ] Time to fall
   - Animation curve
 
 ## Movement
 - Turn speed
-- Max speed
-- Time to reach max speed
+- [x] Max speed
+- [x] Time to reach max speed
   - Animation curve
-- Time to stop
+- [x] Time to stop
   - Animation curve
 
 ## Physics Interaction
-- Slope
-- Stairs
-- Wall
-- Uneven ground
-- Moving platform
-- Rotating platform
-- Fluid
-- Trampoline
+- [ ] Slope
+- [ ] Stairs
+- [ ] Wall
+- [ ] Uneven ground
+- [ ] Moving platform
+- [ ] Rotating platform
+- [ ] Fluid
+- [ ] Trampoline
 
 ## Juice
 - Particle effects

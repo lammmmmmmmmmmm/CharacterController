@@ -343,6 +343,7 @@ namespace PhysicsCharacterController
 
                 if (slopeHit.normal.y == 1)
                 {
+                    // flat ground
                     _forward = Quaternion.Euler(0f, targetAngle, 0f) * Vector3.forward;
                     _globalForward = _forward;
                     _reactionForward = _forward;
@@ -355,6 +356,7 @@ namespace PhysicsCharacterController
                 }
                 else
                 {
+                    // slope
                     Vector3 tmpGlobalForward = transform.forward.normalized;
                     Vector3 tmpForward = new Vector3(tmpGlobalForward.x,
                         Vector3.ProjectOnPlane(transform.forward.normalized, slopeHit.normal).normalized.y,
@@ -364,43 +366,44 @@ namespace PhysicsCharacterController
 
                     if (_currentSurfaceAngle <= maxClimbableSlopeAngle && !_isTouchingStep)
                     {
-                        _forward = tmpForward * ((speedMultiplierOnAngle.Evaluate(_currentSurfaceAngle / 90f) *
-                                                  canSlideMultiplierCurve) + 1f);
+                        // walkable slope
+                        _forward = tmpForward * (speedMultiplierOnAngle.Evaluate(_currentSurfaceAngle / 90f) *
+                            canSlideMultiplierCurve + 1f);
                         _globalForward = tmpGlobalForward *
-                                         ((speedMultiplierOnAngle.Evaluate(_currentSurfaceAngle / 90f) *
-                                           canSlideMultiplierCurve) + 1f);
+                                         (speedMultiplierOnAngle.Evaluate(_currentSurfaceAngle / 90f) *
+                                             canSlideMultiplierCurve + 1f);
                         _reactionForward = tmpReactionForward *
-                                           ((speedMultiplierOnAngle.Evaluate(_currentSurfaceAngle / 90f) *
-                                             canSlideMultiplierCurve) + 1f);
+                                           (speedMultiplierOnAngle.Evaluate(_currentSurfaceAngle / 90f) *
+                                               canSlideMultiplierCurve + 1f);
 
                         SetFriction(frictionAgainstFloor, true);
                         _currentLockOnSlope = lockOnSlope;
                     }
                     else if (_isTouchingStep)
                     {
-                        _forward = tmpForward * ((speedMultiplierOnAngle.Evaluate(_currentSurfaceAngle / 90f) *
-                                                  climbingStairsMultiplierCurve) + 1f);
+                        _forward = tmpForward * (speedMultiplierOnAngle.Evaluate(_currentSurfaceAngle / 90f) *
+                            climbingStairsMultiplierCurve + 1f);
                         _globalForward = tmpGlobalForward *
-                                         ((speedMultiplierOnAngle.Evaluate(_currentSurfaceAngle / 90f) *
-                                           climbingStairsMultiplierCurve) + 1f);
+                                         (speedMultiplierOnAngle.Evaluate(_currentSurfaceAngle / 90f) *
+                                             climbingStairsMultiplierCurve + 1f);
                         _reactionForward = tmpReactionForward *
-                                           ((speedMultiplierOnAngle.Evaluate(_currentSurfaceAngle / 90f) *
-                                             climbingStairsMultiplierCurve) + 1f);
+                                           (speedMultiplierOnAngle.Evaluate(_currentSurfaceAngle / 90f) *
+                                               climbingStairsMultiplierCurve + 1f);
 
                         SetFriction(frictionAgainstFloor, true);
                         _currentLockOnSlope = true;
                     }
                     else
                     {
-                        //set forward
-                        _forward = tmpForward * ((speedMultiplierOnAngle.Evaluate(_currentSurfaceAngle / 90f) *
-                                                  cantSlideMultiplierCurve) + 1f);
+                        // unwalkable slope
+                        _forward = tmpForward * (speedMultiplierOnAngle.Evaluate(_currentSurfaceAngle / 90f) *
+                            cantSlideMultiplierCurve + 1f);
                         _globalForward = tmpGlobalForward *
-                                         ((speedMultiplierOnAngle.Evaluate(_currentSurfaceAngle / 90f) *
-                                           cantSlideMultiplierCurve) + 1f);
+                                         (speedMultiplierOnAngle.Evaluate(_currentSurfaceAngle / 90f) *
+                                             cantSlideMultiplierCurve + 1f);
                         _reactionForward = tmpReactionForward *
-                                           ((speedMultiplierOnAngle.Evaluate(_currentSurfaceAngle / 90f) *
-                                             cantSlideMultiplierCurve) + 1f);
+                                           (speedMultiplierOnAngle.Evaluate(_currentSurfaceAngle / 90f) *
+                                               cantSlideMultiplierCurve + 1f);
 
                         SetFriction(0f, true);
                         _currentLockOnSlope = lockOnSlope;
@@ -574,7 +577,7 @@ namespace PhysicsCharacterController
                     // _isFallingAfterJump = true;
                 }
             }
-            // //jumped from wall
+            //jumped from wall
             // else if (_jump && !_isGrounded && _isTouchingWall)
             // {
             //     _rigidbody.linearVelocity += _wallNormal * jumpFromWallMultiplier +

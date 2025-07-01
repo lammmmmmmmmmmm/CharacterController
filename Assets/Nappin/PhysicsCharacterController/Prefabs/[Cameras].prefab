@@ -413,7 +413,7 @@ MonoBehaviour:
   TargetOffset: {x: 0, y: 0, z: 0}
   TrackerSettings:
     BindingMode: 4
-    PositionDamping: {x: 0.2, y: 1, z: 0.5}
+    PositionDamping: {x: 0, y: 1, z: 0.5}
     AngularDampingMode: 0
     RotationDamping: {x: 0, y: 0, z: 0}
     QuaternionDamping: 0
@@ -1497,7 +1497,6 @@ MonoBehaviour:
   thirdPersonMaskChangeDelay: 0.1
   thirdPersonHeightOnTransition: 0.5
   activeThirdPerson: 1
-  activeDebug: 1
 --- !u!114 &7823351807975455129
 MonoBehaviour:
   m_ObjectHideFlags: 0
