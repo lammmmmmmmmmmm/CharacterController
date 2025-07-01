@@ -188,7 +188,7 @@ namespace PhysicsCharacterController
             Jump();
 
             //gravity
-            if (!_isJumping)
+            if (!_isJumping && !_isGrounded)
             {
                 ApplyGravity();
             }
@@ -314,69 +314,72 @@ namespace PhysicsCharacterController
         {
             _prevGroundNormal = _groundNormal;
 
-            if (Physics.SphereCast(transform.position, slopeCheckerThreshold, Vector3.down, out var slopeHit,
-                    _originalColliderHeight / 2f + 0.5f, groundMask))
-            {
-                _groundNormal = slopeHit.normal;
+			if (Physics.SphereCast(transform.position, slopeCheckerThreshold, Vector3.down, out var slopeHit,
+					_originalColliderHeight / 2f + 0.5f, groundMask))
+			{
+				_groundNormal = slopeHit.normal;
 
-                if (Mathf.Approximately(slopeHit.normal.y, 1))
-                {
-                    // flat ground
-                    _forward = Quaternion.Euler(0f, targetAngle, 0f) * Vector3.forward;
-                    _globalForward = _forward;
-                    _reactionForward = _forward;
+				if (Mathf.Approximately(slopeHit.normal.y, 1))
+				{
+					// flat ground
+					_forward = Quaternion.Euler(0f, targetAngle, 0f) * Vector3.forward;
+					_globalForward = _forward;
+					_reactionForward = _forward;
 
-                    _currentLockOnSlope = lockOnSlope;
+					_currentLockOnSlope = lockOnSlope;
 
-                    _currentSurfaceAngle = 0f;
-                    _isTouchingSlope = false;
-                }
-                else
-                {
-                    // slope
-                    _currentSurfaceAngle = Vector3.Angle(Vector3.up, slopeHit.normal);
-                    _isTouchingSlope = true;
-                    
-                    _globalForward = transform.forward.normalized;
-                    _forward = new Vector3(_globalForward.x,
-                        Vector3.ProjectOnPlane(transform.forward.normalized, slopeHit.normal).normalized.y,
-                        _globalForward.z);
-                    _reactionForward = new Vector3(_forward.x, _globalForward.y - _forward.y, _forward.z);
+					_currentSurfaceAngle = 0f;
+					_isTouchingSlope = false;
+				}
+				else
+				{
+					// slope
+					_currentSurfaceAngle = Vector3.Angle(Vector3.up, slopeHit.normal);
+					_isTouchingSlope = true;
 
-                    if (_currentSurfaceAngle <= maxClimbableSlopeAngle && !_isTouchingStep)
-                    {
-                        _currentLockOnSlope = lockOnSlope;
-                    }
-                    else if (_isTouchingStep)
-                    {
-                        _currentLockOnSlope = true;
-                    }
-                    else
-                    {
-                        _currentLockOnSlope = false;
-                    }
-                }
+					_globalForward = transform.forward.normalized;
+					_forward = new Vector3(_globalForward.x,
+						Vector3.ProjectOnPlane(transform.forward.normalized, slopeHit.normal).normalized.y,
+						_globalForward.z);
+					_reactionForward = new Vector3(_forward.x, _globalForward.y - _forward.y, _forward.z);
 
-                //set down
-                _down = Vector3.Project(Vector3.down, slopeHit.normal);
-                _globalDown = Vector3.down.normalized;
-                _reactionGlobalDown = Vector3.up.normalized;
-            }
-            else
-            {
-                _groundNormal = Vector3.zero;
+					if (_currentSurfaceAngle <= maxClimbableSlopeAngle && !_isTouchingStep)
+					{
+						_currentLockOnSlope = lockOnSlope;
+					}
+					else if (_isTouchingStep)
+					{
+						_currentLockOnSlope = true;
+					}
+					else
+					{
+						_currentLockOnSlope = false;
+					}
+				}
 
-                _forward = Vector3.ProjectOnPlane(transform.forward, slopeHit.normal).normalized;
-                _globalForward = _forward;
-                _reactionForward = _forward;
+				//set down
+				_down = Vector3.Project(Vector3.down, slopeHit.normal);
+				_globalDown = Vector3.down.normalized;
+				_reactionGlobalDown = Vector3.up.normalized;
+			}
+			else
+			{
+				_groundNormal = Vector3.zero;
 
-                //set down
-                _down = Vector3.down.normalized;
-                _globalDown = Vector3.down.normalized;
-                _reactionGlobalDown = Vector3.up.normalized;
+				_forward = Vector3.ProjectOnPlane(transform.forward, slopeHit.normal).normalized;
+				_globalForward = _forward;
+				_reactionForward = _forward;
 
-                _currentLockOnSlope = lockOnSlope;
-            }
+				//set down
+				_down = Vector3.down.normalized;
+				_globalDown = Vector3.down.normalized;
+				_reactionGlobalDown = Vector3.up.normalized;
+
+				_currentLockOnSlope = lockOnSlope;
+
+				_currentSurfaceAngle = 0f;
+				_isTouchingSlope = false;
+			}
         }
         #endregion
 
@@ -639,24 +642,24 @@ namespace PhysicsCharacterController
             }
 
             //avoid little jump
-            if (!Mathf.Approximately(_groundNormal.y, 1) && _groundNormal.y != 0 && _isTouchingSlope && _prevGroundNormal != _groundNormal)
-            {
-                //Debug.Log("Added correction jump on slope");
-                gravity *= gravityMultiplierOnSlideChange;
-            }
+            // if (!Mathf.Approximately(_groundNormal.y, 1) && _groundNormal.y != 0 && _isTouchingSlope && _prevGroundNormal != _groundNormal)
+            // {
+            //     //Debug.Log("Added correction jump on slope");
+            //     gravity *= gravityMultiplierOnSlideChange;
+            // }
 
-            //slide if angle too big
-            if (!Mathf.Approximately(_groundNormal.y, 1) && _groundNormal.y != 0 && _currentSurfaceAngle > maxClimbableSlopeAngle && !_isTouchingStep)
-            {
-                if (_currentSurfaceAngle is > 0f and <= 30f)
-                {
-                    gravity = _globalDown * (gravityMultiplierIfUnclimbableSlope * -Physics.gravity.y);
-                }
-                else if (_currentSurfaceAngle is > 30f and <= 89f)
-                {
-                    gravity = _globalDown * (gravityMultiplierIfUnclimbableSlope * 0.5f * -Physics.gravity.y);
-                }
-            }
+            // //slide if angle too big
+            // if (!Mathf.Approximately(_groundNormal.y, 1) && _groundNormal.y != 0 && _currentSurfaceAngle > maxClimbableSlopeAngle && !_isTouchingStep)
+            // {
+            //     if (_currentSurfaceAngle is > 0f and <= 30f)
+            //     {
+            //         gravity = _globalDown * (gravityMultiplierIfUnclimbableSlope * -Physics.gravity.y);
+            //     }
+            //     else if (_currentSurfaceAngle is > 30f and <= 89f)
+            //     {
+            //         gravity = _globalDown * (gravityMultiplierIfUnclimbableSlope * 0.5f * -Physics.gravity.y);
+            //     }
+            // }
 
             _rigidbody.AddForce(gravity);
         }
