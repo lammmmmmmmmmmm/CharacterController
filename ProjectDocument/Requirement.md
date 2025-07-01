@@ -9,6 +9,9 @@
 - [ ] Hold to jump higher
 - [ ] Jump buffer
 - [ ] Coyote time
+- [ ] Limit air control
+- [ ] Ceiling check
+- [ ] Ground check
 - [x] Max height
 - [x] Time to reach max height
   - Animation curve
@@ -16,7 +19,7 @@
 - Having a fall curve is quite complicated, since player can fall from different heights.
   
 ## Movement
-- Turn speed
+- [ ] Turn acceleration
 - [x] Max speed
 - [x] Multiple speeds
   - Walk
@@ -26,9 +29,9 @@
 
 ## Physics Interaction
 - [x] Slope
-- [ ] Stairs
+- [x] Stairs
+- [x] Uneven ground
 - [ ] Wall jump
-- [ ] Uneven ground
 - [x] Moving platform
 - [x] Rotating platform
 - [ ] Fluid

@@ -8,7 +8,7 @@ namespace PhysicsCharacterController
     [RequireComponent(typeof(Rigidbody))]
     public class CharacterManager : MonoBehaviour
     {
-        [Header("Movement specifics")]
+        [Header("Movement")]
         [SerializeField] private LayerMask groundMask;
         public float movementSpeed = 14f;
         public float sprintSpeed = 20f;
@@ -20,7 +20,7 @@ namespace PhysicsCharacterController
         [SerializeField] private float acceleration = 10f;
         [SerializeField] private float deceleration = 10f;
 
-        [Header("Crouch specifics")]
+        [Header("Crouch")]
         [Tooltip("Multiplier applied to the collider when player is crouching")]
         public float crouchHeightMultiplier = 0.5f;
         [Tooltip("FP camera head height")]
@@ -28,18 +28,20 @@ namespace PhysicsCharacterController
         [Tooltip("FP camera head height when crouching")]
         public Vector3 povCrouchHeadHeight = new(0f, -0.1f, -0.1f);
         
-        [Header("Jump and gravity specifics")]
+        [Header("Jump and gravity")]
         [SerializeField] private float maxJumpHeight = 2f;
         [SerializeField] private float timeToReachMaxJumpHeightInSeconds = 0.5f;
         [SerializeField] private AnimationCurve jumpCurve;
 
-        [Header("Slope and step specifics")]
+        [Header("Slope and step")]
         [Tooltip("Distance from the player feet used to check if the player is touching the ground")]
         public float groundCheckerThreshold = 0.1f;
         [Tooltip("Distance from the player feet used to check if the player is touching a slope")]
         public float slopeCheckerThreshold = 0.51f;
         [Tooltip("Distance from the player center used to check if the player is touching a step")]
         public float stepCheckerThreshold = 0.6f;
+        [Tooltip("If true, the player won't slide down on walkable slopes")]
+        public bool lockOnSlope;
         [Range(1f, 89f)]
         [Tooltip("Max climbable slope angle")]
         public float maxClimbableSlopeAngle = 53.6f;
@@ -47,8 +49,8 @@ namespace PhysicsCharacterController
         public float maxStepHeight = 0.74f;
         [Tooltip("Animation curve for slope speed reduction based on angle (0-90 degrees)")]
         public AnimationCurve slopeSpeedCurve = AnimationCurve.Linear(0f, 1f, 90f, 0.3f);
-        
-        [Space(10)]
+
+        [Header("Gravity")]
         [Tooltip("Multiplier factor for gravity")]
         public float gravityMultiplier = 6f;
         [Tooltip("Multiplier factor for gravity used on change of normal")]
@@ -56,10 +58,8 @@ namespace PhysicsCharacterController
         [Tooltip("Multiplier factor for gravity used on non climbable slope")]
         public float gravityMultiplierIfUnclimbableSlope = 30f;
         [Space(10)]
-        [Tooltip("If true, the player won't slide down on walkable slopes")]
-        public bool lockOnSlope;
 
-        [Header("Wall slide specifics")]
+        [Header("Wall slide")]
         [Tooltip("Distance from the player head used to check if the player is touching a wall")]
         public float wallCheckerThreshold = 0.8f;
         [Tooltip("Wall checker distance from the player center")]
