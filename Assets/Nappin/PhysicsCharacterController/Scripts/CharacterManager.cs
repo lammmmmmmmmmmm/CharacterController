@@ -187,7 +187,7 @@ namespace PhysicsCharacterController
             Jump();
 
             //gravity
-            if (!_isJumping && !_isGrounded)
+            if (!_isJumping)
             {
                 ApplyGravity();
             }
