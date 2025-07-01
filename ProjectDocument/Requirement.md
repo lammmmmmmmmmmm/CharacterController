@@ -8,7 +8,7 @@
 ## Jump
 - [ ] Hold to jump higher
 - [x] Jump buffer
-- [ ] Coyote time
+- [x] Coyote time
 - [ ] Limit air control
 - [ ] Ceiling check
 - [x] Ground check

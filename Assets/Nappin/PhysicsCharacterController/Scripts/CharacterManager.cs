@@ -8,7 +8,7 @@ namespace PhysicsCharacterController
     [RequireComponent(typeof(Rigidbody))]
     public class CharacterManager : MonoBehaviour
     {
-        [Header("Movement")]
+		[Header("Movement")]
         [SerializeField] private LayerMask groundMask;
         public float movementSpeed = 14f;
         public float sprintSpeed = 20f;
@@ -34,8 +34,9 @@ namespace PhysicsCharacterController
         [SerializeField] private AnimationCurve jumpCurve;
         [Tooltip("Time window in seconds to buffer jump input when not grounded")]
         [SerializeField] private float jumpBufferTime = 0.2f;
+		[SerializeField] private float coyoteTime = 0.2f;
 
-        [Header("Slope and step")]
+		[Header("Slope and step")]
         [Tooltip("Distance from the player feet used to check if the player is touching the ground")]
         public float groundCheckerThreshold = 0.1f;
         [Tooltip("Distance from the player feet used to check if the player is touching a slope")]
@@ -112,8 +113,8 @@ namespace PhysicsCharacterController
         private Vector3 _groundNormal;
         private Vector3 _prevGroundNormal;
         private bool _prevIsGrounded;
-
         private bool _isGrounded;
+
         private bool _isTouchingSlope;
         private bool _isTouchingStep;
         private bool _isTouchingWall;
@@ -144,29 +145,34 @@ namespace PhysicsCharacterController
         private float _jumpBufferTimer;
         private bool _hasJumpBuffered;
 
+        private bool _shouldStartCoyoteTime => !_isGrounded && _prevIsGrounded && !_isJumping;
+		private bool _hasCoyoteTime;
+		private float _coyoteTimeCounter;
+
         private void Awake()
-        {
-            _rigidbody = GetComponent<Rigidbody>();
-            _collider = GetComponent<CapsuleCollider>();
-            _originalColliderHeight = _collider.height;
+		{
+			_rigidbody = GetComponent<Rigidbody>();
+			_collider = GetComponent<CapsuleCollider>();
+			_originalColliderHeight = _collider.height;
 
-            SetNoFriction();
-            _currentLockOnSlope = lockOnSlope;
-        }
+			SetNoFriction();
+			_currentLockOnSlope = lockOnSlope;
+		}
 
-        private void Update()
-        {
-            _axisInput = input.axisInput;
-            _jumpInput = input.jump;
-            _sprintInput = input.sprint;
-            _crouchInput = input.crouch;
-            
-            HandleJumpBuffer();
-        }
+		private void Update()
+		{
+			_axisInput = input.axisInput;
+			_jumpInput = input.jump;
+			_sprintInput = input.sprint;
+			_crouchInput = input.crouch;
 
-        private void FixedUpdate()
+			HandleJumpInput();
+			HandleJumpBuffer();
+			HandleCoyoteTime();
+		}
+
+		private void FixedUpdate()
         {
-            //local vectors
             CheckGrounded();
             CheckStep();
             // CheckWall();
@@ -374,63 +380,34 @@ namespace PhysicsCharacterController
         }
         #endregion
 
-        #region Jump Buffer
-        private void HandleJumpBuffer()
+        #region Jump
+        private void HandleJumpInput()
         {
             // If jump input is pressed
             if (_jumpInput)
             {
-                if (_isGrounded && CanJump())
-                {
-                    // Normal jump - player is grounded and can jump
-                    ExecuteJump();
+				if (_isGrounded && CanJump() || _hasCoyoteTime)
+				{
+					// Normal jump - player is grounded and can jump
+					ExecuteJump();
+
+					_hasJumpBuffered = false;
+					_coyoteTimeCounter = 0f;
                 }
-                else if (!_isGrounded)
-                {
-                    // Player is not grounded, start jump buffer
-                    _hasJumpBuffered = true;
-                    _jumpBufferTimer = 0f;
-                }
-            }
-            
-            // Update jump buffer timer if buffered
-            if (_hasJumpBuffered && !_isGrounded)
-            {
-                _jumpBufferTimer += Time.deltaTime;
-                
-                // Clear buffer if time exceeded
-                if (_jumpBufferTimer > jumpBufferTime)
-                {
-                    _hasJumpBuffered = false;
-                    _jumpBufferTimer = 0f;
-                }
-            }
-            
-            // Check if player just landed and has buffered jump
-            if (_hasJumpBuffered && _isGrounded && !_prevIsGrounded && CanJump())
-            {
-                // Execute buffered jump
-                ExecuteJump();
-                _hasJumpBuffered = false;
-                _jumpBufferTimer = 0f;
-            }
-            
-            // Clear buffer if player lands but buffer expired
-            if (_isGrounded && !_prevIsGrounded)
-            {
-                if (!_hasJumpBuffered || _jumpBufferTimer > jumpBufferTime)
-                {
-                    _hasJumpBuffered = false;
-                    _jumpBufferTimer = 0f;
-                }
+				else if (!_isGrounded)
+				{
+					// Player is not grounded, start jump buffer
+					_hasJumpBuffered = true;
+					_jumpBufferTimer = 0f;
+				}
             }
         }
-        
-        private bool CanJump()
-        {
-            return (_isTouchingSlope && _currentSurfaceAngle <= maxClimbableSlopeAngle || 
-                    !_isTouchingSlope || _isTouchingStep) && !_isTouchingWall;
-        }
+
+		private bool CanJump()
+		{
+			return (_isTouchingSlope && _currentSurfaceAngle <= maxClimbableSlopeAngle ||
+					!_isTouchingSlope || _isTouchingStep) && !_isTouchingWall;
+		}
         
         private void ExecuteJump()
         {
@@ -441,37 +418,114 @@ namespace PhysicsCharacterController
                 _yPosBeforeJump = _rigidbody.position.y;
             }
         }
-        #endregion
 
-        #region Movement
-        private void HandleCrouchModel()
-        {
-            if (_crouchInput && _isGrounded)
-            {
-                _isCrouch = true;
-                if (meshCharacterCrouch && meshCharacter) meshCharacter.SetActive(false);
-                if (meshCharacterCrouch) meshCharacterCrouch.SetActive(true);
+		private void HandleJumpBuffer()
+		{
+			// Update jump buffer timer if buffered
+			if (_hasJumpBuffered && !_isGrounded)
+			{
+				_jumpBufferTimer += Time.deltaTime;
 
-                float newHeight = _originalColliderHeight * crouchHeightMultiplier;
-                _collider.height = newHeight;
-                _collider.center = new Vector3(0f, -newHeight * crouchHeightMultiplier, 0f);
+				// Clear buffer if time exceeded
+				if (_jumpBufferTimer > jumpBufferTime)
+				{
+					_hasJumpBuffered = false;
+					_jumpBufferTimer = 0f;
+				}
+			}
 
-                headPoint.position = new Vector3(transform.position.x + povCrouchHeadHeight.x,
-                    transform.position.y + povCrouchHeadHeight.y, transform.position.z + povCrouchHeadHeight.z);
-            }
-            else
-            {
-                _isCrouch = false;
-                if (meshCharacterCrouch && meshCharacter) meshCharacter.SetActive(true);
-                if (meshCharacterCrouch) meshCharacterCrouch.SetActive(false);
+			// Check if player just landed and has buffered jump
+			if (_hasJumpBuffered && _isGrounded && !_prevIsGrounded && CanJump())
+			{
+				// Execute buffered jump
+				ExecuteJump();
+				_hasJumpBuffered = false;
+				_jumpBufferTimer = 0f;
+			}
 
-                _collider.height = _originalColliderHeight;
-                _collider.center = Vector3.zero;
+			// Clear buffer if player lands but buffer expired
+			if (_isGrounded && !_prevIsGrounded)
+			{
+				if (!_hasJumpBuffered || _jumpBufferTimer > jumpBufferTime)
+				{
+					_hasJumpBuffered = false;
+					_jumpBufferTimer = 0f;
+				}
+			}
+		}
 
-                headPoint.position = new Vector3(transform.position.x + povNormalHeadHeight.x,
-                    transform.position.y + povNormalHeadHeight.y, transform.position.z + povNormalHeadHeight.z);
-            }
-        }
+		private void HandleCoyoteTime()
+		{
+			if (_shouldStartCoyoteTime)
+			{
+				_hasCoyoteTime = true;
+				_coyoteTimeCounter = coyoteTime;
+			}
+
+			if (_hasCoyoteTime)
+			{
+				_coyoteTimeCounter -= Time.deltaTime;
+
+				if (_coyoteTimeCounter <= 0f)
+				{
+					_hasCoyoteTime = false;
+					_coyoteTimeCounter = 0f;
+				}
+			}
+		}
+
+		private void Jump()
+		{
+			//TODO: add ceiling check
+			if (_isJumping)
+			{
+				// Update jump up timer
+				_jumpUpTimer += Time.fixedDeltaTime;
+				float jumpUpProgress = Mathf.Clamp01(_jumpUpTimer / timeToReachMaxJumpHeightInSeconds);
+				float curveValue = jumpCurve?.Evaluate(jumpUpProgress) ?? jumpUpProgress;
+
+				float targetHeight = _yPosBeforeJump + maxJumpHeight * curveValue;
+				_rigidbody.position = new Vector3(_rigidbody.position.x, targetHeight, _rigidbody.position.z);
+
+				if (curveValue >= 1f)
+				{
+					// Jump is complete, start falling
+					_jumpUpTimer = 0f;
+					_isJumping = false;
+				}
+			}
+		}
+		#endregion
+
+		#region Movement
+		private void HandleCrouchModel()
+		{
+			if (_crouchInput && _isGrounded)
+			{
+				_isCrouch = true;
+				if (meshCharacterCrouch && meshCharacter) meshCharacter.SetActive(false);
+				if (meshCharacterCrouch) meshCharacterCrouch.SetActive(true);
+
+				float newHeight = _originalColliderHeight * crouchHeightMultiplier;
+				_collider.height = newHeight;
+				_collider.center = new Vector3(0f, -newHeight * crouchHeightMultiplier, 0f);
+
+				headPoint.position = new Vector3(transform.position.x + povCrouchHeadHeight.x,
+					transform.position.y + povCrouchHeadHeight.y, transform.position.z + povCrouchHeadHeight.z);
+			}
+			else
+			{
+				_isCrouch = false;
+				if (meshCharacterCrouch && meshCharacter) meshCharacter.SetActive(true);
+				if (meshCharacterCrouch) meshCharacterCrouch.SetActive(false);
+
+				_collider.height = _originalColliderHeight;
+				_collider.center = Vector3.zero;
+
+				headPoint.position = new Vector3(transform.position.x + povNormalHeadHeight.x,
+					transform.position.y + povNormalHeadHeight.y, transform.position.z + povNormalHeadHeight.z);
+			}
+		}
 
         private void Move()
         {
@@ -567,28 +621,6 @@ namespace PhysicsCharacterController
         {
             characterModel.transform.rotation =
                 Quaternion.Euler(0f, characterCamera.transform.rotation.eulerAngles.y, 0f);
-        }
-
-        private void Jump()
-        {
-            //TODO: add ceiling check
-            if (_isJumping)
-            {
-                // Update jump up timer
-                _jumpUpTimer += Time.fixedDeltaTime;
-                float jumpUpProgress = Mathf.Clamp01(_jumpUpTimer / timeToReachMaxJumpHeightInSeconds);
-                float curveValue = jumpCurve?.Evaluate(jumpUpProgress) ?? jumpUpProgress;
-
-                float targetHeight = _yPosBeforeJump + maxJumpHeight * curveValue;
-                _rigidbody.position = new Vector3(_rigidbody.position.x, targetHeight, _rigidbody.position.z);
-                
-                if (curveValue >= 1f)
-                {
-                    // Jump is complete, start falling
-                    _jumpUpTimer = 0f;
-                    _isJumping = false;
-                }
-            }
         }
         #endregion
 
