@@ -27,17 +27,8 @@ namespace PhysicsCharacterController
         public Vector3 povNormalHeadHeight = new(0f, 0.5f, -0.1f);
         [Tooltip("FP camera head height when crouching")]
         public Vector3 povCrouchHeadHeight = new(0f, -0.1f, -0.1f);
-
-        [Range(0f, 1f)]
-        [Tooltip("Player friction against floor")]
-        public float frictionAgainstFloor = 0.3f;
-        [Range(0.01f, 0.99f)]
-        [Tooltip("Player friction against wall")]
-        public float frictionAgainstWall = 0.839f;
         
         [Header("Jump and gravity specifics")]
-        [Tooltip("Multiplier applied to gravity when the player is holding jump")]
-        public float holdJumpMultiplier = 5f;
         [SerializeField] private float maxJumpHeight = 2f;
         [SerializeField] private float timeToReachMaxJumpHeightInSeconds = 0.5f;
         [SerializeField] private AnimationCurve jumpCurve;
@@ -73,11 +64,6 @@ namespace PhysicsCharacterController
         public float wallCheckerThreshold = 0.8f;
         [Tooltip("Wall checker distance from the player center")]
         public float heightWallCheckerChecker = 0.5f;
-        [Space(10)]
-        [Tooltip("Multiplier used when the player is jumping from a wall")]
-        public float jumpFromWallMultiplier = 30f;
-        [Tooltip("Factor used to determine the height of the jump")]
-        public float multiplierVerticalLeap = 1f;
 
         [Header("References")]
         [Tooltip("Character camera")]
@@ -133,7 +119,6 @@ namespace PhysicsCharacterController
 
         private Vector2 _axisInput;
         private bool _jumpInput;
-        private bool _jumpHold;
         private bool _sprintInput;
         private bool _crouchInput;
 
@@ -147,17 +132,12 @@ namespace PhysicsCharacterController
         private bool _lockRotation;
         private bool _lockToCamera;
         
-        private float _accelerationTimer;
-        private float _decelerationTimer;
         private bool _isAccelerating;
         private float _currentSpeed;
-        private float _previousTargetSpeed;
 
         private float _jumpUpTimer;
         private float _yPosBeforeJump;
-        private float _fallDownTimer;
         private bool _isJumping;
-        private bool _isFallingAfterJump;
 
         private void Awake()
         {
@@ -165,7 +145,7 @@ namespace PhysicsCharacterController
             _collider = GetComponent<CapsuleCollider>();
             _originalColliderHeight = _collider.height;
 
-            SetFriction(frictionAgainstFloor, true);
+            SetNoFriction();
             _currentLockOnSlope = lockOnSlope;
         }
 
@@ -173,7 +153,6 @@ namespace PhysicsCharacterController
         {
             _axisInput = input.axisInput;
             _jumpInput = input.jump;
-            _jumpHold = input.jumpHold;
             _sprintInput = input.sprint;
             _crouchInput = input.crouch;
         }
@@ -183,7 +162,7 @@ namespace PhysicsCharacterController
             //local vectors
             CheckGrounded();
             CheckStep();
-            CheckWall();
+            // CheckWall();
             CheckSlopeAndDirections();
 
             //movement
@@ -196,7 +175,7 @@ namespace PhysicsCharacterController
             Jump();
 
             //gravity
-            if (!_isJumping && !_isFallingAfterJump)
+            if (!_isJumping)
             {
                 ApplyGravity();
             }
@@ -221,11 +200,11 @@ namespace PhysicsCharacterController
 
             if (Physics.Raycast(bottomStepPos, _globalForward, out var stepLowerHit, stepCheckerThreshold, groundMask))
             {
-                if (RoundValue(stepLowerHit.normal.y) == 0 && !Physics.Raycast(
+                if (RoundValue(stepLowerHit.normal.y) == 0
+                && !Physics.Raycast(
                         bottomStepPos + new Vector3(0f, maxStepHeight, 0f), _globalForward, out _,
                         stepCheckerThreshold + 0.05f, groundMask))
                 {
-                    //rigidbody.position -= new Vector3(0f, -stepSmooth, 0f);
                     tmpStep = true;
                 }
             }
@@ -233,12 +212,12 @@ namespace PhysicsCharacterController
             if (Physics.Raycast(bottomStepPos, Quaternion.AngleAxis(45, transform.up) * _globalForward,
                     out var stepLowerHit45, stepCheckerThreshold, groundMask))
             {
-                if (RoundValue(stepLowerHit45.normal.y) == 0 && !Physics.Raycast(
+                if (RoundValue(stepLowerHit45.normal.y) == 0
+                && !Physics.Raycast(
                         bottomStepPos + new Vector3(0f, maxStepHeight, 0f),
                         Quaternion.AngleAxis(45, Vector3.up) * _globalForward, out _,
                         stepCheckerThreshold + 0.05f, groundMask))
                 {
-                    //rigidbody.position -= new Vector3(0f, -stepSmooth, 0f);
                     tmpStep = true;
                 }
             }
@@ -246,12 +225,12 @@ namespace PhysicsCharacterController
             if (Physics.Raycast(bottomStepPos, Quaternion.AngleAxis(-45, transform.up) * _globalForward,
                     out var stepLowerHitMinus45, stepCheckerThreshold, groundMask))
             {
-                if (RoundValue(stepLowerHitMinus45.normal.y) == 0 && !Physics.Raycast(
+                if (RoundValue(stepLowerHitMinus45.normal.y) == 0
+                && !Physics.Raycast(
                         bottomStepPos + new Vector3(0f, maxStepHeight, 0f),
                         Quaternion.AngleAxis(-45, Vector3.up) * _globalForward, out _,
                         stepCheckerThreshold + 0.05f, groundMask))
                 {
-                    //rigidbody.position -= new Vector3(0f, -stepSmooth, 0f);
                     tmpStep = true;
                 }
             }
@@ -327,14 +306,13 @@ namespace PhysicsCharacterController
             {
                 _groundNormal = slopeHit.normal;
 
-                if (slopeHit.normal.y == 1)
+                if (Mathf.Approximately(slopeHit.normal.y, 1))
                 {
                     // flat ground
                     _forward = Quaternion.Euler(0f, targetAngle, 0f) * Vector3.forward;
                     _globalForward = _forward;
                     _reactionForward = _forward;
 
-                    SetFriction(frictionAgainstFloor, true);
                     _currentLockOnSlope = lockOnSlope;
 
                     _currentSurfaceAngle = 0f;
@@ -354,17 +332,14 @@ namespace PhysicsCharacterController
 
                     if (_currentSurfaceAngle <= maxClimbableSlopeAngle && !_isTouchingStep)
                     {
-                        SetFriction(frictionAgainstFloor, true);
                         _currentLockOnSlope = lockOnSlope;
                     }
                     else if (_isTouchingStep)
                     {
-                        SetFriction(frictionAgainstFloor, true);
                         _currentLockOnSlope = true;
                     }
                     else
                     {
-                        SetFriction(0f, true);
                         _currentLockOnSlope = false;
                     }
                 }
@@ -387,7 +362,6 @@ namespace PhysicsCharacterController
                 _globalDown = Vector3.down.normalized;
                 _reactionGlobalDown = Vector3.up.normalized;
 
-                SetFriction(frictionAgainstFloor, true);
                 _currentLockOnSlope = lockOnSlope;
             }
         }
@@ -462,7 +436,6 @@ namespace PhysicsCharacterController
                 }
                 
                 targetSpeed *= finalSlopeMultiplier * crouchMultiplier;
-                _previousTargetSpeed = targetSpeed;
                 
                 if (!_isAccelerating)
                 {
@@ -472,7 +445,14 @@ namespace PhysicsCharacterController
                 _currentSpeed = Mathf.MoveTowards(_currentSpeed, targetSpeed, acceleration * Time.fixedDeltaTime);
                 Vector3 targetVelocity = _forward * _currentSpeed;
 
-                _rigidbody.linearVelocity = new Vector3(targetVelocity.x, _rigidbody.linearVelocity.y, targetVelocity.z);
+                //TODO: fix step climbing. Apply a constant upward velocity instead of adding each frame
+                float upVel = 0f;
+                if (_isTouchingStep)
+                {
+                    upVel = 1f;
+                }
+
+                _rigidbody.linearVelocity = new Vector3(targetVelocity.x, _rigidbody.linearVelocity.y + upVel, targetVelocity.z);
             }
             else
             {
@@ -517,13 +497,12 @@ namespace PhysicsCharacterController
         {
             //jumped
             if (_jumpInput && _isGrounded &&
-                (_isTouchingSlope && _currentSurfaceAngle <= maxClimbableSlopeAngle || !_isTouchingSlope) && !_isTouchingWall)
+                (_isTouchingSlope && _currentSurfaceAngle <= maxClimbableSlopeAngle || !_isTouchingSlope || _isTouchingStep) && !_isTouchingWall)
             {
                 if (!_isJumping)
                 {
                     _isJumping = true;
                     _jumpUpTimer = 0f;
-                    _fallDownTimer = 0f;
                     _yPosBeforeJump = _rigidbody.position.y;
                 }
             }
@@ -544,64 +523,8 @@ namespace PhysicsCharacterController
                     // Jump is complete, start falling
                     _jumpUpTimer = 0f;
                     _isJumping = false;
-                    _fallDownTimer = 0f;
-                    // _isFallingAfterJump = true;
                 }
             }
-            //jumped from wall
-            // else if (_jump && !_isGrounded && _isTouchingWall)
-            // {
-            //     _rigidbody.linearVelocity += _wallNormal * jumpFromWallMultiplier +
-            //                                  Vector3.up * (jumpFromWallMultiplier * multiplierVerticalLeap);
-            //     _isJumping = true;
-
-            //     targetAngle = Mathf.Atan2(_wallNormal.x, _wallNormal.z) * Mathf.Rad2Deg;
-
-            //     _forward = _wallNormal;
-            //     _globalForward = _forward;
-            //     _reactionForward = _forward;
-            // }
-            
-            // if (!_isJumping && !_isGrounded && _isFallingAfterJump)
-            // {
-            //     // Update jump up timer
-            //     _fallDownTimer += Time.fixedDeltaTime;
-            //     float fallDownProgress = Mathf.Clamp01(_fallDownTimer / timeToFallInSeconds);
-            //     float curveValue = fallCurve?.Evaluate(fallDownProgress) ?? fallDownProgress;
-            //
-            //     float targetHeight = _yPosBeforeJump + maxJumpHeight * curveValue;
-            //     _rigidbody.position = new Vector3(_rigidbody.position.x, targetHeight, _rigidbody.position.z);
-            //     
-            //     if (curveValue <= 0f)
-            //     {
-            //         // Jump is complete, reset falling state
-            //         _isFallingAfterJump = false;
-            //         _fallDownTimer = 0f;
-            //     }
-            // }
-            // else
-            // {
-            //     _isFallingAfterJump = false;
-            //     _fallDownTimer = 0f;
-            // }
-
-            //is falling
-            // if (_rigidbody.linearVelocity.y < 0 && !_isGrounded)
-            // {
-            //     _jumpGravityMultiplier = fallMultiplier;
-            // }
-            // else if (_rigidbody.linearVelocity.y > 0.1f && (_currentSurfaceAngle <= maxClimbableSlopeAngle || _isTouchingStep))
-            // {
-            //     //is short jumping
-            //     if (!_jumpHold || !canLongJump) _jumpGravityMultiplier = 1f;
-            //     //is long jumping
-            //     else _jumpGravityMultiplier = 1f / holdJumpMultiplier;
-            // }
-            // else
-            // {
-            //     _isJumping = false;
-            //     _jumpGravityMultiplier = 1f;
-            // }
         }
         #endregion
 
@@ -620,16 +543,15 @@ namespace PhysicsCharacterController
             }
 
             //avoid little jump
-            if (_groundNormal.y != 1 && _groundNormal.y != 0 && _isTouchingSlope && _prevGroundNormal != _groundNormal)
+            if (!Mathf.Approximately(_groundNormal.y, 1) && _groundNormal.y != 0 && _isTouchingSlope && _prevGroundNormal != _groundNormal)
             {
                 //Debug.Log("Added correction jump on slope");
                 gravity *= gravityMultiplierOnSlideChange;
             }
 
             //slide if angle too big
-            if (_groundNormal.y != 1 && _groundNormal.y != 0 && _currentSurfaceAngle > maxClimbableSlopeAngle && !_isTouchingStep)
+            if (!Mathf.Approximately(_groundNormal.y, 1) && _groundNormal.y != 0 && _currentSurfaceAngle > maxClimbableSlopeAngle && !_isTouchingStep)
             {
-                //Debug.Log("Slope angle too high, character is sliding");
                 if (_currentSurfaceAngle is > 0f and <= 30f)
                 {
                     gravity = _globalDown * (gravityMultiplierIfUnclimbableSlope * -Physics.gravity.y);
@@ -639,9 +561,6 @@ namespace PhysicsCharacterController
                     gravity = _globalDown * (gravityMultiplierIfUnclimbableSlope * 0.5f * -Physics.gravity.y);
                 }
             }
-
-            //friction when touching wall
-            if (_isTouchingWall && _rigidbody.linearVelocity.y < 0) gravity *= frictionAgainstWall;
 
             _rigidbody.AddForce(gravity);
         }
@@ -664,12 +583,12 @@ namespace PhysicsCharacterController
         #endregion
 
         #region Friction and Round
-        private void SetFriction(float frictionWall, bool isMinimum)
+        private void SetNoFriction()
         {
-            _collider.material.dynamicFriction = 0.6f * frictionWall;
-            _collider.material.staticFriction = 0.6f * frictionWall;
+            _collider.material.dynamicFriction = 0f;
+            _collider.material.staticFriction = 0f;
 
-            _collider.material.frictionCombine = isMinimum ? PhysicsMaterialCombine.Minimum : PhysicsMaterialCombine.Maximum;
+            _collider.material.frictionCombine = PhysicsMaterialCombine.Minimum;
         }
 
         private float RoundValue(float value)
@@ -798,36 +717,36 @@ namespace PhysicsCharacterController
                     new Vector3(0f, maxStepHeight, 0f));
 
                 //wall check
-                Gizmos.color = Color.black;
-                Gizmos.DrawLine(topWallPos, topWallPos + _globalForward * wallCheckerThreshold);
+                // Gizmos.color = Color.black;
+                // Gizmos.DrawLine(topWallPos, topWallPos + _globalForward * wallCheckerThreshold);
 
-                Gizmos.color = Color.black;
-                Gizmos.DrawLine(topWallPos,
-                    topWallPos + Quaternion.AngleAxis(45, transform.up) * (_globalForward * wallCheckerThreshold));
+                // Gizmos.color = Color.black;
+                // Gizmos.DrawLine(topWallPos,
+                //     topWallPos + Quaternion.AngleAxis(45, transform.up) * (_globalForward * wallCheckerThreshold));
 
-                Gizmos.color = Color.black;
-                Gizmos.DrawLine(topWallPos,
-                    topWallPos + Quaternion.AngleAxis(90, transform.up) * (_globalForward * wallCheckerThreshold));
+                // Gizmos.color = Color.black;
+                // Gizmos.DrawLine(topWallPos,
+                //     topWallPos + Quaternion.AngleAxis(90, transform.up) * (_globalForward * wallCheckerThreshold));
 
-                Gizmos.color = Color.black;
-                Gizmos.DrawLine(topWallPos,
-                    topWallPos + Quaternion.AngleAxis(135, transform.up) * (_globalForward * wallCheckerThreshold));
+                // Gizmos.color = Color.black;
+                // Gizmos.DrawLine(topWallPos,
+                //     topWallPos + Quaternion.AngleAxis(135, transform.up) * (_globalForward * wallCheckerThreshold));
 
-                Gizmos.color = Color.black;
-                Gizmos.DrawLine(topWallPos,
-                    topWallPos + Quaternion.AngleAxis(180, transform.up) * (_globalForward * wallCheckerThreshold));
+                // Gizmos.color = Color.black;
+                // Gizmos.DrawLine(topWallPos,
+                //     topWallPos + Quaternion.AngleAxis(180, transform.up) * (_globalForward * wallCheckerThreshold));
 
-                Gizmos.color = Color.black;
-                Gizmos.DrawLine(topWallPos,
-                    topWallPos + Quaternion.AngleAxis(225, transform.up) * (_globalForward * wallCheckerThreshold));
+                // Gizmos.color = Color.black;
+                // Gizmos.DrawLine(topWallPos,
+                //     topWallPos + Quaternion.AngleAxis(225, transform.up) * (_globalForward * wallCheckerThreshold));
 
-                Gizmos.color = Color.black;
-                Gizmos.DrawLine(topWallPos,
-                    topWallPos + Quaternion.AngleAxis(270, transform.up) * (_globalForward * wallCheckerThreshold));
+                // Gizmos.color = Color.black;
+                // Gizmos.DrawLine(topWallPos,
+                //     topWallPos + Quaternion.AngleAxis(270, transform.up) * (_globalForward * wallCheckerThreshold));
 
-                Gizmos.color = Color.black;
-                Gizmos.DrawLine(topWallPos,
-                    topWallPos + Quaternion.AngleAxis(315, transform.up) * (_globalForward * wallCheckerThreshold));
+                // Gizmos.color = Color.black;
+                // Gizmos.DrawLine(topWallPos,
+                //     topWallPos + Quaternion.AngleAxis(315, transform.up) * (_globalForward * wallCheckerThreshold));
             }
         }
         #endregion

@@ -4946,7 +4946,7 @@ GameObject:
   - component: {fileID: 1504776049}
   - component: {fileID: 1504776048}
   - component: {fileID: 1504776047}
-  m_Layer: 6
+  m_Layer: 0
   m_Name: camera_cube
   m_TagString: Untagged
   m_Icon: {fileID: 0}
