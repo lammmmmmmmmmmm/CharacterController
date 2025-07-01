@@ -119,13 +119,15 @@ namespace PhysicsCharacterController
 
                 foreach (var rb in _rigidbodies)
                 {
+                    CharacterManager characterManager = rb.GetComponent<CharacterManager>();
+                    if (characterManager.GetJumping()) continue;
+                    
                     if (angularVelocity.y > 0)
                     {
                         rb.transform.RotateAround(_transform.position, Vector3.up, angularVelocity.y);
                         try
                         {
-                            rb.GetComponent<CharacterManager>().targetAngle =
-                                rb.GetComponent<CharacterManager>().targetAngle + angularVelocity.y;
+                            characterManager.targetAngle += angularVelocity.y;
                         }
                         catch
                         {

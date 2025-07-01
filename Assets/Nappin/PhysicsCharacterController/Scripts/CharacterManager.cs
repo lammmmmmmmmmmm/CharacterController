@@ -9,37 +9,42 @@ namespace PhysicsCharacterController
     public class CharacterManager : MonoBehaviour
     {
         [Header("Movement specifics")]
-        [Tooltip("Layers where the player can stand on")]
         [SerializeField] private LayerMask groundMask;
-        [Tooltip("Base player speed")]
         public float movementSpeed = 14.4f;
+        public float sprintSpeed = 20f;
         [Range(0f, 1f)]
-        [Tooltip("Minimum input value to trigger movement")]
         public float crouchSpeedMultiplier = 0.248f;
         [Range(0.01f, 0.99f)]
         [Tooltip("Minimum input value to trigger movement")]
         public float movementThreshold = 0.01f;
-        [Space(10)]
-        [Tooltip("Speed up multiplier")]
-        public float dampSpeedUp = 0.2f;
-        [Tooltip("Speed down multiplier")]
-        public float dampSpeedDown = 0.1f;
+        [SerializeField] private float timeToReachMaxSpeedInSeconds = 0.5f;
+        [SerializeField] private AnimationCurve accelerationCurve;
+        [SerializeField] private float timeToStopInSeconds = 0.5f;
+        [SerializeField] private AnimationCurve decelerationCurve;
 
-        [Header("Jump and gravity specifics")]
-        [Tooltip("Jump velocity")]
-        public float jumpVelocity = 20f;
-        [Tooltip("Multiplier applied to gravity when the player is falling")]
-        public float fallMultiplier = 1.5f;
-        [Tooltip("Multiplier applied to gravity when the player is holding jump")]
-        public float holdJumpMultiplier = 5f;
+        [Header("Crouch specifics")]
+        [Tooltip("Multiplier applied to the collider when player is crouching")]
+        public float crouchHeightMultiplier = 0.5f;
+        [Tooltip("FP camera head height")]
+        public Vector3 povNormalHeadHeight = new(0f, 0.5f, -0.1f);
+        [Tooltip("FP camera head height when crouching")]
+        public Vector3 povCrouchHeadHeight = new(0f, -0.1f, -0.1f);
+
         [Range(0f, 1f)]
         [Tooltip("Player friction against floor")]
         public float frictionAgainstFloor = 0.3f;
         [Range(0.01f, 0.99f)]
         [Tooltip("Player friction against wall")]
         public float frictionAgainstWall = 0.839f;
-        [Tooltip("Player can long jump")]
-        public bool canLongJump = true;
+        
+        [Header("Jump and gravity specifics")]
+        [Tooltip("Multiplier applied to gravity when the player is holding jump")]
+        public float holdJumpMultiplier = 5f;
+        [SerializeField] private float maxJumpHeight = 2f;
+        [SerializeField] private float timeToReachMaxJumpHeightInSeconds = 0.5f;
+        [SerializeField] private AnimationCurve jumpCurve;
+        [SerializeField] private float timeToFallInSeconds = 0.5f;
+        [SerializeField] private AnimationCurve fallCurve;
 
         [Header("Slope and step specifics")]
         [Tooltip("Distance from the player feet used to check if the player is touching the ground")]
@@ -75,6 +80,7 @@ namespace PhysicsCharacterController
         [Tooltip("Multiplier factor for gravity used on non climbable slope")]
         public float gravityMultiplierIfUnclimbableSlope = 30f;
         [Space(10)]
+        [Tooltip("If true, the player won't slide down on walkable slopes")]
         public bool lockOnSlope;
 
         [Header("Wall slide specifics")]
@@ -87,16 +93,6 @@ namespace PhysicsCharacterController
         public float jumpFromWallMultiplier = 30f;
         [Tooltip("Factor used to determine the height of the jump")]
         public float multiplierVerticalLeap = 1f;
-
-        [Header("Sprint and crouch specifics")]
-        [Tooltip("Sprint speed")]
-        public float sprintSpeed = 20f;
-        [Tooltip("Multiplier applied to the collider when player is crouching")]
-        public float crouchHeightMultiplier = 0.5f;
-        [Tooltip("FP camera head height")]
-        public Vector3 povNormalHeadHeight = new(0f, 0.5f, -0.1f);
-        [Tooltip("FP camera head height when crouching")]
-        public Vector3 povCrouchHeadHeight = new(0f, -0.1f, -0.1f);
 
         [Header("References")]
         [Tooltip("Character camera")]
@@ -144,20 +140,17 @@ namespace PhysicsCharacterController
         private Vector3 _prevGroundNormal;
         private bool _prevIsGrounded;
 
-        private float _jumpGravityMultiplier = 1f;
-
         private bool _isGrounded;
         private bool _isTouchingSlope;
         private bool _isTouchingStep;
         private bool _isTouchingWall;
-        private bool _isJumping;
         private bool _isCrouch;
 
         private Vector2 _axisInput;
-        private bool _jump;
+        private bool _jumpInput;
         private bool _jumpHold;
-        private bool _sprint;
-        private bool _crouch;
+        private bool _sprintInput;
+        private bool _crouchInput;
 
         [HideInInspector]
         public float targetAngle;
@@ -165,10 +158,20 @@ namespace PhysicsCharacterController
         private CapsuleCollider _collider;
         private float _originalColliderHeight;
 
-        private Vector3 _currVelocity = Vector3.zero;
         private float _turnSmoothVelocity;
         private bool _lockRotation;
         private bool _lockToCamera;
+        
+        private float _accelerationTimer;
+        private float _decelerationTimer;
+        private bool _isAccelerating;
+        private float _previousSpeed;
+
+        private float _jumpUpTimer;
+        private float _yPosBeforeJump;
+        private float _fallDownTimer;
+        private bool _isJumping;
+        private bool _isFallingAfterJump;
 
         private void Awake()
         {
@@ -183,10 +186,10 @@ namespace PhysicsCharacterController
         private void Update()
         {
             _axisInput = input.axisInput;
-            _jump = input.jump;
+            _jumpInput = input.jump;
             _jumpHold = input.jumpHold;
-            _sprint = input.sprint;
-            _crouch = input.crouch;
+            _sprintInput = input.sprint;
+            _crouchInput = input.crouch;
         }
 
         private void FixedUpdate()
@@ -199,7 +202,7 @@ namespace PhysicsCharacterController
 
             //movement
             HandleCrouchModel();
-            Walk();
+            Move();
 
             if (!_lockToCamera) Rotation();
             else ForceRotation();
@@ -207,7 +210,10 @@ namespace PhysicsCharacterController
             Jump();
 
             //gravity
-            ApplyGravity();
+            if (!_isJumping && !_isFallingAfterJump)
+            {
+                ApplyGravity();
+            }
 
             //events
             UpdateEvents();
@@ -349,7 +355,6 @@ namespace PhysicsCharacterController
                 }
                 else
                 {
-                    //set forward
                     Vector3 tmpGlobalForward = transform.forward.normalized;
                     Vector3 tmpForward = new Vector3(tmpGlobalForward.x,
                         Vector3.ProjectOnPlane(transform.forward.normalized, slopeHit.normal).normalized.y,
@@ -359,7 +364,6 @@ namespace PhysicsCharacterController
 
                     if (_currentSurfaceAngle <= maxClimbableSlopeAngle && !_isTouchingStep)
                     {
-                        //set forward
                         _forward = tmpForward * ((speedMultiplierOnAngle.Evaluate(_currentSurfaceAngle / 90f) *
                                                   canSlideMultiplierCurve) + 1f);
                         _globalForward = tmpGlobalForward *
@@ -374,7 +378,6 @@ namespace PhysicsCharacterController
                     }
                     else if (_isTouchingStep)
                     {
-                        //set forward
                         _forward = tmpForward * ((speedMultiplierOnAngle.Evaluate(_currentSurfaceAngle / 90f) *
                                                   climbingStairsMultiplierCurve) + 1f);
                         _globalForward = tmpGlobalForward *
@@ -434,7 +437,7 @@ namespace PhysicsCharacterController
         #region Movement
         private void HandleCrouchModel()
         {
-            if (_crouch && _isGrounded)
+            if (_crouchInput && _isGrounded)
             {
                 _isCrouch = true;
                 if (meshCharacterCrouch && meshCharacter) meshCharacter.SetActive(false);
@@ -461,7 +464,7 @@ namespace PhysicsCharacterController
             }
         }
 
-        private void Walk()
+        private void Move()
         {
             float crouchMultiplier = 1f;
             if (_isCrouch) crouchMultiplier = crouchSpeedMultiplier;
@@ -471,21 +474,43 @@ namespace PhysicsCharacterController
                 targetAngle = Mathf.Atan2(_axisInput.x, _axisInput.y) * Mathf.Rad2Deg +
                               characterCamera.transform.eulerAngles.y;
 
-                if (!_sprint)
+                if (!_isAccelerating)
                 {
-                    _rigidbody.linearVelocity = Vector3.SmoothDamp(_rigidbody.linearVelocity,
-                        _forward * (movementSpeed * crouchMultiplier), ref _currVelocity, dampSpeedUp);
+                    _isAccelerating = true;
+                    _accelerationTimer = 0f;
+                    _decelerationTimer = 0f;
                 }
-                else
-                {
-                    _rigidbody.linearVelocity = Vector3.SmoothDamp(_rigidbody.linearVelocity,
-                        _forward * (sprintSpeed * crouchMultiplier), ref _currVelocity, dampSpeedUp);
-                }
+                
+                // Calculate target velocity based on sprint state
+                float targetSpeed = _sprintInput ? sprintSpeed : movementSpeed;
+                _previousSpeed = targetSpeed;
+
+                // Sample acceleration curve
+                _accelerationTimer += Time.fixedDeltaTime;
+                float accelerationProgress = Mathf.Clamp01(_accelerationTimer / timeToReachMaxSpeedInSeconds);
+                float curveValue = accelerationCurve?.Evaluate(accelerationProgress) ?? accelerationProgress;
+                
+                Vector3 targetVelocity = _forward * (targetSpeed * curveValue * crouchMultiplier);
+                _rigidbody.linearVelocity = new Vector3(targetVelocity.x, _rigidbody.linearVelocity.y, targetVelocity.z);
             }
             else
             {
-                _rigidbody.linearVelocity = Vector3.SmoothDamp(_rigidbody.linearVelocity,
-                    Vector3.zero * crouchMultiplier, ref _currVelocity, dampSpeedDown);
+                if (_isAccelerating)
+                {
+                    _isAccelerating = false;
+                    _accelerationTimer = 0f;
+                    _decelerationTimer = 0f;
+                }
+
+                // Update deceleration timer
+                _decelerationTimer += Time.fixedDeltaTime;
+                float decelerationProgress = Mathf.Clamp01(_decelerationTimer / timeToStopInSeconds);
+
+                // Sample deceleration curve (inverted for deceleration)
+                float curveValue = decelerationCurve?.Evaluate(decelerationProgress) ?? decelerationProgress;
+
+                Vector3 targetVelocity = _forward * (_previousSpeed * curveValue * crouchMultiplier);
+                _rigidbody.linearVelocity = new Vector3(targetVelocity.x, _rigidbody.linearVelocity.y, targetVelocity.z);
             }
         }
 
@@ -517,43 +542,92 @@ namespace PhysicsCharacterController
         private void Jump()
         {
             //jumped
-            if (_jump && _isGrounded &&
+            if (_jumpInput && _isGrounded &&
                 (_isTouchingSlope && _currentSurfaceAngle <= maxClimbableSlopeAngle || !_isTouchingSlope) && !_isTouchingWall)
             {
-                _rigidbody.linearVelocity += Vector3.up * jumpVelocity;
-                _isJumping = true;
+                if (!_isJumping)
+                {
+                    _isJumping = true;
+                    _jumpUpTimer = 0f;
+                    _fallDownTimer = 0f;
+                    _yPosBeforeJump = _rigidbody.position.y;
+                }
             }
-            //jumped from wall
-            else if (_jump && !_isGrounded && _isTouchingWall)
+
+            //TODO: add ceiling check
+            if (_isJumping)
             {
-                _rigidbody.linearVelocity += _wallNormal * jumpFromWallMultiplier +
-                                             Vector3.up * (jumpFromWallMultiplier * multiplierVerticalLeap);
-                _isJumping = true;
+                // Update jump up timer
+                _jumpUpTimer += Time.fixedDeltaTime;
+                float jumpUpProgress = Mathf.Clamp01(_jumpUpTimer / timeToReachMaxJumpHeightInSeconds);
+                float curveValue = jumpCurve?.Evaluate(jumpUpProgress) ?? jumpUpProgress;
 
-                targetAngle = Mathf.Atan2(_wallNormal.x, _wallNormal.z) * Mathf.Rad2Deg;
-
-                _forward = _wallNormal;
-                _globalForward = _forward;
-                _reactionForward = _forward;
+                float targetHeight = _yPosBeforeJump + maxJumpHeight * curveValue;
+                _rigidbody.position = new Vector3(_rigidbody.position.x, targetHeight, _rigidbody.position.z);
+                
+                if (curveValue >= 1f)
+                {
+                    // Jump is complete, start falling
+                    _jumpUpTimer = 0f;
+                    _isJumping = false;
+                    _fallDownTimer = 0f;
+                    // _isFallingAfterJump = true;
+                }
             }
+            // //jumped from wall
+            // else if (_jump && !_isGrounded && _isTouchingWall)
+            // {
+            //     _rigidbody.linearVelocity += _wallNormal * jumpFromWallMultiplier +
+            //                                  Vector3.up * (jumpFromWallMultiplier * multiplierVerticalLeap);
+            //     _isJumping = true;
+
+            //     targetAngle = Mathf.Atan2(_wallNormal.x, _wallNormal.z) * Mathf.Rad2Deg;
+
+            //     _forward = _wallNormal;
+            //     _globalForward = _forward;
+            //     _reactionForward = _forward;
+            // }
+            
+            // if (!_isJumping && !_isGrounded && _isFallingAfterJump)
+            // {
+            //     // Update jump up timer
+            //     _fallDownTimer += Time.fixedDeltaTime;
+            //     float fallDownProgress = Mathf.Clamp01(_fallDownTimer / timeToFallInSeconds);
+            //     float curveValue = fallCurve?.Evaluate(fallDownProgress) ?? fallDownProgress;
+            //
+            //     float targetHeight = _yPosBeforeJump + maxJumpHeight * curveValue;
+            //     _rigidbody.position = new Vector3(_rigidbody.position.x, targetHeight, _rigidbody.position.z);
+            //     
+            //     if (curveValue <= 0f)
+            //     {
+            //         // Jump is complete, reset falling state
+            //         _isFallingAfterJump = false;
+            //         _fallDownTimer = 0f;
+            //     }
+            // }
+            // else
+            // {
+            //     _isFallingAfterJump = false;
+            //     _fallDownTimer = 0f;
+            // }
 
             //is falling
-            if (_rigidbody.linearVelocity.y < 0 && !_isGrounded)
-            {
-                _jumpGravityMultiplier = fallMultiplier;
-            }
-            else if (_rigidbody.linearVelocity.y > 0.1f && (_currentSurfaceAngle <= maxClimbableSlopeAngle || _isTouchingStep))
-            {
-                //is short jumping
-                if (!_jumpHold || !canLongJump) _jumpGravityMultiplier = 1f;
-                //is long jumping
-                else _jumpGravityMultiplier = 1f / holdJumpMultiplier;
-            }
-            else
-            {
-                _isJumping = false;
-                _jumpGravityMultiplier = 1f;
-            }
+            // if (_rigidbody.linearVelocity.y < 0 && !_isGrounded)
+            // {
+            //     _jumpGravityMultiplier = fallMultiplier;
+            // }
+            // else if (_rigidbody.linearVelocity.y > 0.1f && (_currentSurfaceAngle <= maxClimbableSlopeAngle || _isTouchingStep))
+            // {
+            //     //is short jumping
+            //     if (!_jumpHold || !canLongJump) _jumpGravityMultiplier = 1f;
+            //     //is long jumping
+            //     else _jumpGravityMultiplier = 1f / holdJumpMultiplier;
+            // }
+            // else
+            // {
+            //     _isJumping = false;
+            //     _jumpGravityMultiplier = 1f;
+            // }
         }
         #endregion
 
@@ -564,11 +638,11 @@ namespace PhysicsCharacterController
 
             if (_currentLockOnSlope || _isTouchingStep)
             {
-                gravity = _down * (gravityMultiplier * -Physics.gravity.y * _jumpGravityMultiplier);
+                gravity = _down * (gravityMultiplier * -Physics.gravity.y);
             }
             else
             {
-                gravity = _globalDown * (gravityMultiplier * -Physics.gravity.y * _jumpGravityMultiplier);
+                gravity = _globalDown * (gravityMultiplier * -Physics.gravity.y);
             }
 
             //avoid little jump
@@ -583,9 +657,13 @@ namespace PhysicsCharacterController
             {
                 //Debug.Log("Slope angle too high, character is sliding");
                 if (_currentSurfaceAngle is > 0f and <= 30f)
+                {
                     gravity = _globalDown * (gravityMultiplierIfUnclimbableSlope * -Physics.gravity.y);
+                }
                 else if (_currentSurfaceAngle is > 30f and <= 89f)
-                    gravity = _globalDown * gravityMultiplierIfUnclimbableSlope / 2f * -Physics.gravity.y;
+                {
+                    gravity = _globalDown * (gravityMultiplierIfUnclimbableSlope * 0.5f * -Physics.gravity.y);
+                }
             }
 
             //friction when touching wall
@@ -598,15 +676,15 @@ namespace PhysicsCharacterController
         #region Events
         private void UpdateEvents()
         {
-            if (_jump && _isGrounded && (_isTouchingSlope && _currentSurfaceAngle <= maxClimbableSlopeAngle ||
+            if (_jumpInput && _isGrounded && (_isTouchingSlope && _currentSurfaceAngle <= maxClimbableSlopeAngle ||
                                          !_isTouchingSlope) ||
-                (_jump && !_isGrounded && _isTouchingWall)) onJump.Invoke();
+                (_jumpInput && !_isGrounded && _isTouchingWall)) onJump.Invoke();
             if (_isGrounded && !_prevIsGrounded && _rigidbody.linearVelocity.y > -minimumVerticalSpeedToLandEvent)
                 onLand.Invoke();
             if (Mathf.Abs(_rigidbody.linearVelocity.x) + Mathf.Abs(_rigidbody.linearVelocity.z) >
                 minimumHorizontalSpeedToFastEvent) onFast.Invoke();
             if (_isTouchingWall && _rigidbody.linearVelocity.y < 0) onWallSlide.Invoke();
-            if (_sprint) onSprint.Invoke();
+            if (_sprintInput) onSprint.Invoke();
             if (_isCrouch) onCrouch.Invoke();
         }
         #endregion
@@ -676,7 +754,6 @@ namespace PhysicsCharacterController
             if (!lockToCamera) targetAngle = characterModel.transform.eulerAngles.y;
         }
         #endregion
-
 
         #region Gizmos
         private void OnDrawGizmos()
