@@ -10,17 +10,15 @@ namespace PhysicsCharacterController
     {
         [Header("Movement specifics")]
         [SerializeField] private LayerMask groundMask;
-        public float movementSpeed = 14.4f;
+        public float movementSpeed = 14f;
         public float sprintSpeed = 20f;
         [Range(0f, 1f)]
         public float crouchSpeedMultiplier = 0.248f;
         [Range(0.01f, 0.99f)]
         [Tooltip("Minimum input value to trigger movement")]
         public float movementThreshold = 0.01f;
-        [SerializeField] private float timeToReachMaxSpeedInSeconds = 0.5f;
-        [SerializeField] private AnimationCurve accelerationCurve;
-        [SerializeField] private float timeToStopInSeconds = 0.5f;
-        [SerializeField] private AnimationCurve decelerationCurve;
+        [SerializeField] private float acceleration = 10f;
+        [SerializeField] private float deceleration = 10f;
 
         [Header("Crouch specifics")]
         [Tooltip("Multiplier applied to the collider when player is crouching")]
@@ -43,8 +41,6 @@ namespace PhysicsCharacterController
         [SerializeField] private float maxJumpHeight = 2f;
         [SerializeField] private float timeToReachMaxJumpHeightInSeconds = 0.5f;
         [SerializeField] private AnimationCurve jumpCurve;
-        [SerializeField] private float timeToFallInSeconds = 0.5f;
-        [SerializeField] private AnimationCurve fallCurve;
 
         [Header("Slope and step specifics")]
         [Tooltip("Distance from the player feet used to check if the player is touching the ground")]
@@ -165,7 +161,8 @@ namespace PhysicsCharacterController
         private float _accelerationTimer;
         private float _decelerationTimer;
         private bool _isAccelerating;
-        private float _previousSpeed;
+        private float _currentSpeed;
+        private float _previousTargetSpeed;
 
         private float _jumpUpTimer;
         private float _yPosBeforeJump;
@@ -356,7 +353,10 @@ namespace PhysicsCharacterController
                 }
                 else
                 {
-                    // slope
+                    // slope - calculate angle first
+                    _currentSurfaceAngle = Vector3.Angle(Vector3.up, slopeHit.normal);
+                    _isTouchingSlope = true;
+                    
                     Vector3 tmpGlobalForward = transform.forward.normalized;
                     Vector3 tmpForward = new Vector3(tmpGlobalForward.x,
                         Vector3.ProjectOnPlane(transform.forward.normalized, slopeHit.normal).normalized.y,
@@ -408,9 +408,6 @@ namespace PhysicsCharacterController
                         SetFriction(0f, true);
                         _currentLockOnSlope = lockOnSlope;
                     }
-
-                    _currentSurfaceAngle = Vector3.Angle(Vector3.up, slopeHit.normal);
-                    _isTouchingSlope = true;
                 }
 
                 //set down
@@ -477,23 +474,39 @@ namespace PhysicsCharacterController
                 targetAngle = Mathf.Atan2(_axisInput.x, _axisInput.y) * Mathf.Rad2Deg +
                               characterCamera.transform.eulerAngles.y;
 
+                // Calculate target velocity based on sprint state
+                float targetSpeed = _sprintInput ? sprintSpeed : movementSpeed;
+                _previousTargetSpeed = targetSpeed;
+                
                 if (!_isAccelerating)
                 {
                     _isAccelerating = true;
-                    _accelerationTimer = 0f;
-                    _decelerationTimer = 0f;
                 }
-                
-                // Calculate target velocity based on sprint state
-                float targetSpeed = _sprintInput ? sprintSpeed : movementSpeed;
-                _previousSpeed = targetSpeed;
 
-                // Sample acceleration curve
-                _accelerationTimer += Time.fixedDeltaTime;
-                float accelerationProgress = Mathf.Clamp01(_accelerationTimer / timeToReachMaxSpeedInSeconds);
-                float curveValue = accelerationCurve?.Evaluate(accelerationProgress) ?? accelerationProgress;
-                
-                Vector3 targetVelocity = _forward * (targetSpeed * curveValue * crouchMultiplier);
+                _currentSpeed = Mathf.MoveTowards(_currentSpeed, targetSpeed, acceleration * Time.fixedDeltaTime);
+                Vector3 targetVelocity = _forward * _currentSpeed * crouchMultiplier;
+
+                // Prevent movement up unwalkable slopes
+                if (_isTouchingSlope && _currentSurfaceAngle > maxClimbableSlopeAngle && !_isTouchingStep)
+                {
+                    Vector3 intendedDirection = Quaternion.Euler(0f, targetAngle, 0f) * Vector3.forward;
+
+                    // Project the intended direction onto the horizontal plane
+                    Vector3 horizontalIntendedDirection = Vector3.ProjectOnPlane(intendedDirection, Vector3.up).normalized;
+
+                    // Project the slope normal onto the horizontal plane to get slope direction
+                    Vector3 horizontalSlopeDirection = Vector3.ProjectOnPlane(-_groundNormal, Vector3.up).normalized;
+
+                    // Check if the player is trying to move up the slope
+                    float dotProduct = Vector3.Dot(horizontalIntendedDirection, horizontalSlopeDirection);
+
+                    if (dotProduct > 0.1f) // Player is trying to move up the slope
+                    {
+                        _currentSpeed = 0f;
+                        targetVelocity = Vector3.zero;
+                    }
+                }
+
                 _rigidbody.linearVelocity = new Vector3(targetVelocity.x, _rigidbody.linearVelocity.y, targetVelocity.z);
             }
             else
@@ -501,18 +514,11 @@ namespace PhysicsCharacterController
                 if (_isAccelerating)
                 {
                     _isAccelerating = false;
-                    _accelerationTimer = 0f;
-                    _decelerationTimer = 0f;
                 }
 
-                // Update deceleration timer
-                _decelerationTimer += Time.fixedDeltaTime;
-                float decelerationProgress = Mathf.Clamp01(_decelerationTimer / timeToStopInSeconds);
-
-                // Sample deceleration curve (inverted for deceleration)
-                float curveValue = decelerationCurve?.Evaluate(decelerationProgress) ?? decelerationProgress;
-
-                Vector3 targetVelocity = _forward * (_previousSpeed * curveValue * crouchMultiplier);
+                _currentSpeed = Mathf.MoveTowards(_currentSpeed, 0f, deceleration * Time.fixedDeltaTime);
+                Vector3 targetVelocity = _forward * _currentSpeed * crouchMultiplier;
+                
                 _rigidbody.linearVelocity = new Vector3(targetVelocity.x, _rigidbody.linearVelocity.y, targetVelocity.z);
             }
         }

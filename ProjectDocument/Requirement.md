@@ -12,26 +12,27 @@
 - [x] Max height
 - [x] Time to reach max height
   - Animation curve
-- [ ] Time to fall
-  - Animation curve
-
+- [x] Gravity
+- Having a fall curve is quite complicated, since player can fall from different heights.
+  
 ## Movement
 - Turn speed
 - [x] Max speed
-- [x] Time to reach max speed
-  - Animation curve
-- [x] Time to stop
-  - Animation curve
+- [x] Multiple speeds
+  - Walk
+  - Run
+- Since we are using multiple speeds, the acceleration and deceleration should be linear.
+  - If we want to use curves, we have to make different acceleration and deceleration curves for each speed.
 
 ## Physics Interaction
-- [ ] Slope
+- [x] Slope
 - [ ] Stairs
-- [ ] Wall
+- [ ] Wall jump
 - [ ] Uneven ground
-- [ ] Moving platform
-- [ ] Rotating platform
+- [x] Moving platform
+- [x] Rotating platform
 - [ ] Fluid
-- [ ] Trampoline
+- [x] Trampoline
 
 ## Juice
 - Particle effects

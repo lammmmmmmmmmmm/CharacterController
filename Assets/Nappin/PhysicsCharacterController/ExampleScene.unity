@@ -6171,10 +6171,6 @@ PrefabInstance:
       value: 0.2
       objectReference: {fileID: 0}
     - target: {fileID: 6212462410201203773, guid: 282a4e884ccaec346abf296757b0d116, type: 3}
-      propertyPath: maxJumpHeight
-      value: 4
-      objectReference: {fileID: 0}
-    - target: {fileID: 6212462410201203773, guid: 282a4e884ccaec346abf296757b0d116, type: 3}
       propertyPath: characterModel
       value: 
       objectReference: {fileID: 1989639284}

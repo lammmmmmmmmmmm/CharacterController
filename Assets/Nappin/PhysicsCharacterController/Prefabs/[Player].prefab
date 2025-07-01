@@ -138,66 +138,15 @@ MonoBehaviour:
   sprintSpeed: 20
   crouchSpeedMultiplier: 0.248
   movementThreshold: 0.01
-  timeToReachMaxSpeedInSeconds: 0.5
-  accelerationCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 0
-      inSlope: 2
-      outSlope: 2
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    - serializedVersion: 3
-      time: 1
-      value: 1
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  timeToStopInSeconds: 0.2
-  decelerationCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 1
-      inSlope: -1
-      outSlope: -1
-      tangentMode: 34
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0.33333334
-    - serializedVersion: 3
-      time: 1
-      value: 0
-      inSlope: -1
-      outSlope: -1
-      tangentMode: 34
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
+  acceleration: 50
+  deceleration: 70
   crouchHeightMultiplier: 0.5
   povNormalHeadHeight: {x: 0, y: 0.5, z: -0.1}
   povCrouchHeadHeight: {x: 0, y: -0.1, z: -0.1}
-  jumpVelocity: 20
-  fallMultiplier: 1.5
-  holdJumpMultiplier: 5
   frictionAgainstFloor: 0.189
   frictionAgainstWall: 0.082
-  canLongJump: 1
-  maxJumpHeight: 2
+  holdJumpMultiplier: 5
+  maxJumpHeight: 4
   timeToReachMaxJumpHeightInSeconds: 0.5
   jumpCurve:
     serializedVersion: 2
