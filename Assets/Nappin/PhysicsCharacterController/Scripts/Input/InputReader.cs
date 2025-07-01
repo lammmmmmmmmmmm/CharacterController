@@ -20,8 +20,6 @@ namespace PhysicsCharacterController
         [HideInInspector]
         public bool jump;
         [HideInInspector]
-        public bool jumpHold;
-        [HideInInspector]
         public bool sprint;
         [HideInInspector]
         public bool crouch;
@@ -51,6 +49,16 @@ namespace PhysicsCharacterController
             _movementActions.Gameplay.Crouch.canceled += CrouchEnded;
         }
 
+        private void OnEnable()
+        {
+            _movementActions.Enable();
+        }
+
+        private void OnDisable()
+        {
+            _movementActions.Disable();
+        }
+
         private void GetDeviceNew(InputAction.CallbackContext ctx)
         {
             _oldInput = _isMouseAndKeyboard;
@@ -62,6 +70,17 @@ namespace PhysicsCharacterController
         }
 
         #region Actions
+        private void FixedUpdate()
+        {
+            if (_hasJumped && _skippedFrame)
+            {
+                jump = false;
+                _hasJumped = false;
+            }
+
+            if (!_skippedFrame && enableJump) _skippedFrame = true;
+        }
+
         public void OnMove(InputAction.CallbackContext ctx)
         {
             axisInput = ctx.ReadValue<Vector2>();
@@ -73,7 +92,6 @@ namespace PhysicsCharacterController
             if (enableJump)
             {
                 jump = true;
-                jumpHold = true;
 
                 _hasJumped = true;
                 _skippedFrame = false;
@@ -83,20 +101,8 @@ namespace PhysicsCharacterController
         public void JumpEnded()
         {
             jump = false;
-            jumpHold = false;
         }
 
-        private void FixedUpdate()
-        {
-            if (_hasJumped && _skippedFrame)
-            {
-                jump = false;
-                _hasJumped = false;
-            }
-
-            if (!_skippedFrame && enableJump) _skippedFrame = true;
-        }
-        
         public void OnCamera(InputAction.CallbackContext ctx)
         {
             GetDeviceNew(ctx);
@@ -122,15 +128,5 @@ namespace PhysicsCharacterController
             crouch = false;
         }
         #endregion
-
-        private void OnEnable()
-        {
-            _movementActions.Enable();
-        }
-
-        private void OnDisable()
-        {
-            _movementActions.Disable();
-        }
     }
 }

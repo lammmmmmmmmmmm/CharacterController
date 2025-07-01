@@ -7,11 +7,11 @@
 
 ## Jump
 - [ ] Hold to jump higher
-- [ ] Jump buffer
+- [x] Jump buffer
 - [ ] Coyote time
 - [ ] Limit air control
 - [ ] Ceiling check
-- [ ] Ground check
+- [x] Ground check
 - [x] Max height
 - [x] Time to reach max height
   - Animation curve

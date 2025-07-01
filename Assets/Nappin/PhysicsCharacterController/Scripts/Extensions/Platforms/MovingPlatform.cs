@@ -120,7 +120,7 @@ namespace PhysicsCharacterController
                 foreach (var rb in _rigidbodies)
                 {
                     CharacterManager characterManager = rb.GetComponent<CharacterManager>();
-                    if (characterManager.GetJumping()) continue;
+                    if (characterManager && characterManager.GetJumping()) continue;
                     
                     if (angularVelocity.y > 0)
                     {
