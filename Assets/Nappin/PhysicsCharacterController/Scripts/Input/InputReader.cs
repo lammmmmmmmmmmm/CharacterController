@@ -11,6 +11,11 @@ namespace PhysicsCharacterController
         public UnityEvent changedInputToGamepad;
 
         [Header("Enable inputs")]
+        [SerializeField] private InputActionReference moveAction;
+        [SerializeField] private InputActionReference jumpAction;
+        [SerializeField] private InputActionReference cameraAction;
+        [SerializeField] private InputActionReference sprintAction;
+        [SerializeField] private InputActionReference crouchAction;
         public bool enableJump = true;
         public bool enableCrouch = true;
         public bool enableSprint = true;
@@ -29,34 +34,37 @@ namespace PhysicsCharacterController
         private bool _isMouseAndKeyboard = true;
         private bool _oldInput = true;
 
-        private MovementActions _movementActions;
-
-        private void Awake()
-        {
-            _movementActions = new MovementActions();
-
-            _movementActions.Gameplay.Movement.performed += OnMove;
-
-            _movementActions.Gameplay.Jump.performed += _ => OnJump();
-            _movementActions.Gameplay.Jump.canceled += _ => JumpEnded();
-
-            _movementActions.Gameplay.Camera.performed += OnCamera;
-
-            _movementActions.Gameplay.Sprint.performed += OnSprint;
-            _movementActions.Gameplay.Sprint.canceled += SprintEnded;
-
-            _movementActions.Gameplay.Crouch.performed += OnCrouch;
-            _movementActions.Gameplay.Crouch.canceled += CrouchEnded;
-        }
-
         private void OnEnable()
         {
-            _movementActions.Enable();
+            moveAction.action.Enable();
+            moveAction.action.performed += OnMove;
+            
+            jumpAction.action.performed += OnJump;
+            jumpAction.action.canceled += JumpEnded;
+            
+            cameraAction.action.performed += OnCamera;
+            
+            sprintAction.action.performed += OnSprint;
+            sprintAction.action.canceled += SprintEnded;
+            
+            crouchAction.action.performed += OnCrouch;
+            crouchAction.action.canceled += CrouchEnded;
         }
 
         private void OnDisable()
         {
-            _movementActions.Disable();
+            moveAction.action.performed -= OnMove;
+            
+            jumpAction.action.performed -= OnJump;
+            jumpAction.action.canceled -= JumpEnded;
+            
+            cameraAction.action.performed -= OnCamera;
+            
+            sprintAction.action.performed -= OnSprint;
+            sprintAction.action.canceled -= SprintEnded;
+            
+            crouchAction.action.performed -= OnCrouch;
+            crouchAction.action.canceled -= CrouchEnded;
         }
 
         private void GetDeviceNew(InputAction.CallbackContext ctx)
@@ -87,7 +95,7 @@ namespace PhysicsCharacterController
             GetDeviceNew(ctx);
         }
 
-        public void OnJump()
+        public void OnJump(InputAction.CallbackContext ctx)
         {
             if (enableJump)
             {
@@ -98,7 +106,7 @@ namespace PhysicsCharacterController
             }
         }
 
-        public void JumpEnded()
+        public void JumpEnded(InputAction.CallbackContext ctx)
         {
             jump = false;
         }
