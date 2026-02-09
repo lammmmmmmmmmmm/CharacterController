@@ -39,6 +39,7 @@ namespace PhysicsCharacterController
 
         public bool IsCrouching => _isCrouching;
         public float CrouchHeightMultiplier => _crouchHeightMultiplier;
+        public float CrouchSpeedMultiplier => _crouchSpeedMultiplier;
 
         private void Awake()
         {

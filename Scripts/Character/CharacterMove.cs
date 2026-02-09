@@ -25,8 +25,11 @@ namespace PhysicsCharacterController
         private Vector2 _currentInput;
         private bool _isSprinting;
 
+        public float WalkSpeed => _movementSpeed;
+        public float SprintSpeed => _sprintSpeed;
         public float CurrentSpeed => _currentSpeed;
         public float MovementThreshold => _movementThreshold;
+        public bool IsSprinting => _isSprinting;
 
         private void Awake()
         {
