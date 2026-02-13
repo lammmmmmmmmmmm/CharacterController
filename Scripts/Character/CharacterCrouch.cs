@@ -1,4 +1,3 @@
-using System;
 using UnityEngine;
 
 namespace PhysicsCharacterController
@@ -36,8 +35,10 @@ namespace PhysicsCharacterController
         private CapsuleCollider _collider;
         private float _originalColliderHeight;
         private bool _isCrouching;
+        private bool _wantsToCrouch;
 
         public bool IsCrouching => _isCrouching;
+        public bool WantsToCrouch => _wantsToCrouch;
         public float CrouchHeightMultiplier => _crouchHeightMultiplier;
         public float CrouchSpeedMultiplier => _crouchSpeedMultiplier;
 
@@ -59,7 +60,15 @@ namespace PhysicsCharacterController
 
         private void OnCrouchInput(bool wantsToCrouch)
         {
-            HandleCrouch(wantsToCrouch);
+            _wantsToCrouch = wantsToCrouch;
+        }
+
+        public bool ShouldStayCrouched()
+        {
+            bool shouldCrouchInput = _wantsToCrouch && _groundChecker.IsGrounded;
+            bool isBlockedAbove = _isCrouching && IsObstacleAbove();
+
+            return shouldCrouchInput || isBlockedAbove;
         }
 
         private void OnDrawGizmosSelected()
@@ -91,21 +100,6 @@ namespace PhysicsCharacterController
             Gizmos.DrawWireSphere(end, _obstacleCheckRadius);
         }
 
-        private void HandleCrouch(bool wantsToCrouch)
-        {
-            bool shouldCrouchInput = wantsToCrouch && _groundChecker.IsGrounded;
-            bool isBlockedAbove = _isCrouching && IsObstacleAbove();
-
-            if (shouldCrouchInput || isBlockedAbove)
-            {
-                ApplyCrouchState();
-            }
-            else
-            {
-                ApplyStandState();
-            }
-        }
-
         private bool IsObstacleAbove()
         {
             float currentTop = _collider.center.y + _collider.height * 0.5f;
@@ -121,7 +115,7 @@ namespace PhysicsCharacterController
             return Physics.SphereCast(origin, _obstacleCheckRadius, Vector3.up, out _, distance, _obstacleMask, QueryTriggerInteraction.Ignore);
         }
 
-        private void ApplyCrouchState()
+        public void ApplyCrouchState()
         {
             _isCrouching = true;
 
@@ -130,7 +124,7 @@ namespace PhysicsCharacterController
             UpdateHeadPosition(_povCrouchHeadHeight);
         }
 
-        private void ApplyStandState()
+        public void ApplyStandState()
         {
             _isCrouching = false;
 

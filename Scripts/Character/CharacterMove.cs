@@ -1,4 +1,3 @@
-using System;
 using UnityEngine;
 
 namespace PhysicsCharacterController
@@ -16,13 +15,13 @@ namespace PhysicsCharacterController
 
         [Header("References")]
         [SerializeField] private BaseCharacterInput _input;
+        [SerializeField] private Rigidbody _rigidbody;
 
-        private Rigidbody _rigidbody;
         private IMovementModifier[] _speedModifiers;
         private IVelocityModifier[] _velocityModifiers;
 
         private float _currentSpeed;
-        private Vector2 _currentInput;
+        private Vector2 _currentInput => _input.GetMoveInput();
         private bool _isSprinting;
 
         public float WalkSpeed => _movementSpeed;
@@ -30,10 +29,10 @@ namespace PhysicsCharacterController
         public float CurrentSpeed => _currentSpeed;
         public float MovementThreshold => _movementThreshold;
         public bool IsSprinting => _isSprinting;
+        public bool HasMovementInput => _currentInput.sqrMagnitude > _movementThreshold * _movementThreshold;
 
         private void Awake()
         {
-            _rigidbody = GetComponent<Rigidbody>();
             _speedModifiers = GetComponents<IMovementModifier>();
             _velocityModifiers = GetComponents<IVelocityModifier>();
         }
@@ -43,11 +42,6 @@ namespace PhysicsCharacterController
             _input.OnSprint += OnSprintInput;
         }
 
-        private void FixedUpdate()
-        {
-            Move();
-        }
-
         private void OnDisable()
         {
             _input.OnSprint -= OnSprintInput;
@@ -55,21 +49,7 @@ namespace PhysicsCharacterController
 
         private void OnSprintInput(bool isSprinting) => _isSprinting = isSprinting;
 
-        private void Move()
-        {
-            _currentInput = _input.GetMoveInput();
-
-            if (_currentInput.magnitude > _movementThreshold)
-            {
-                MoveWithInput();
-            }
-            else
-            {
-                Decelerate();
-            }
-        }
-
-        private void MoveWithInput()
+        public void MoveWithInput()
         {
             float targetSpeed = CalculateTargetSpeed();
             float combinedMultiplier = GetCombinedSpeedMultiplier();
@@ -128,7 +108,7 @@ namespace PhysicsCharacterController
             return totalAdditive;
         }
 
-        private void Decelerate()
+        public void Decelerate()
         {
             _currentSpeed = Mathf.MoveTowards(_currentSpeed, 0f, _deceleration * Time.fixedDeltaTime);
             ApplyDecelerationVelocity();
@@ -142,11 +122,6 @@ namespace PhysicsCharacterController
             finalVelocity.y = _rigidbody.linearVelocity.y;
 
             _rigidbody.linearVelocity = finalVelocity;
-        }
-
-        public bool IsMoving()
-        {
-            return _currentInput.magnitude > _movementThreshold;
         }
 
         private void OnDrawGizmosSelected()

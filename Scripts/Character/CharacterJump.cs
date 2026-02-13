@@ -29,6 +29,7 @@ namespace PhysicsCharacterController
         private Rigidbody _rigidbody;
 
         private float _jumpBufferTimer;
+        private bool _hasJumpRequested;
         private bool _hasJumpBuffered;
         private bool _hasCoyoteTime;
         private float _coyoteTimeCounter;
@@ -49,12 +50,6 @@ namespace PhysicsCharacterController
             _input.OnJumpPressed += HandleJumpInput;
         }
 
-        private void FixedUpdate()
-        {
-            HandleCoyoteTime();
-            HandleJumpBuffer();
-        }
-
         private void OnDisable()
         {
             _input.OnJumpPressed -= HandleJumpInput;
@@ -62,12 +57,9 @@ namespace PhysicsCharacterController
 
         private void HandleJumpInput()
         {
-            if ((_groundChecker.IsGrounded && !_slopeChecker.IsUnclimbableSlope()) || _hasCoyoteTime)
+            if (CanJumpNow())
             {
-                //TODO: disable jump until landed or jump buffered
-                ExecuteJump();
-                _hasJumpBuffered = false;
-                _coyoteTimeCounter = 0f;
+                _hasJumpRequested = true;
             }
             else if (!_groundChecker.IsGrounded)
             {
@@ -76,44 +68,59 @@ namespace PhysicsCharacterController
             }
         }
 
+        public bool TryExecuteJump()
+        {
+            bool shouldExecuteRequestedJump = _hasJumpRequested && CanJumpNow();
+            bool shouldExecuteBufferedJump = _hasJumpBuffered
+                                            && _groundChecker.JustLanded
+                                            && !_slopeChecker.IsUnclimbableSlope();
+
+            if (!shouldExecuteRequestedJump && !shouldExecuteBufferedJump)
+            {
+                return false;
+            }
+
+            ExecuteJump();
+            _hasJumpRequested = false;
+            _hasCoyoteTime = false;
+            _coyoteTimeCounter = 0f;
+            ResetJumpBuffer();
+            return true;
+        }
+
+        private bool CanJumpNow()
+        {
+            bool canJumpFromGround = _groundChecker.IsGrounded && !_slopeChecker.IsUnclimbableSlope();
+            bool canJumpFromCoyoteWindow = _hasCoyoteTime;
+            return canJumpFromGround || canJumpFromCoyoteWindow;
+        }
+
         private void ExecuteJump()
         {
-            // Reset vertical velocity so that jumps up velocity is consistent
-            _rigidbody.linearVelocity = new Vector3(
-                _rigidbody.linearVelocity.x,
-                0f,
-                _rigidbody.linearVelocity.z);
-
+            ResetVerticalVelocity();
             _rigidbody.AddForce(Vector3.up * CurrentJumpForce, ForceMode.VelocityChange);
             OnJump?.Invoke();
         }
 
-        private void HandleJumpBuffer()
+        public void HandleJumpBuffer(float deltaTime)
         {
-            UpdateJumpBufferTimer();
-            ExecuteBufferedJumpIfLanded();
+            UpdateJumpBufferTimer(deltaTime);
             ClearExpiredBufferOnLanding();
         }
 
-        private void UpdateJumpBufferTimer()
+        private void UpdateJumpBufferTimer(float deltaTime)
         {
-            if (!_hasJumpBuffered || _groundChecker.IsGrounded) return;
+            if (!_hasJumpBuffered || _groundChecker.IsGrounded)
+            {
+                return;
+            }
 
-            _jumpBufferTimer += Time.deltaTime;
+            _jumpBufferTimer += deltaTime;
 
             if (_jumpBufferTimer > _jumpBufferTime)
             {
                 ResetJumpBuffer();
             }
-        }
-
-        private void ExecuteBufferedJumpIfLanded()
-        {
-            if (!_hasJumpBuffered || !_groundChecker.JustLanded || _slopeChecker.IsUnclimbableSlope()) return;
-
-            ResetVerticalVelocity();
-            ExecuteJump();
-            ResetJumpBuffer();
         }
 
         private void ClearExpiredBufferOnLanding()
@@ -140,7 +147,7 @@ namespace PhysicsCharacterController
                 _rigidbody.linearVelocity.z);
         }
 
-        private void HandleCoyoteTime()
+        public void HandleCoyoteTime(float deltaTime)
         {
             if (ShouldStartCoyoteTime)
             {
@@ -150,7 +157,7 @@ namespace PhysicsCharacterController
 
             if (!_hasCoyoteTime) return;
 
-            _coyoteTimeCounter -= Time.deltaTime;
+            _coyoteTimeCounter -= deltaTime;
 
             if (_coyoteTimeCounter <= 0f)
             {

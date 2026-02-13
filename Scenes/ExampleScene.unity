@@ -4519,6 +4519,7 @@ GameObject:
   - component: {fileID: 1042393895}
   - component: {fileID: 1042393910}
   - component: {fileID: 1042393909}
+  - component: {fileID: 1042393911}
   m_Layer: 0
   m_Name: Bot
   m_TagString: Untagged
@@ -4560,6 +4561,7 @@ MonoBehaviour:
   _maxDownwardSpeed: 200
   _slopeChecker: {fileID: 1042393901}
   _stepChecker: {fileID: 1042393903}
+  _rigidbody: {fileID: 1042393906}
 --- !u!114 &1042393897
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4603,6 +4605,7 @@ MonoBehaviour:
   _acceleration: 50
   _deceleration: 70
   _input: {fileID: 1042393910}
+  _rigidbody: {fileID: 1042393906}
 --- !u!114 &1042393899
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4860,6 +4863,24 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _seeker: {fileID: 1042393909}
   _nextWaypointDistance: 1.5
+--- !u!114 &1042393911
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1042393894}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 83ca90fc7fc8c7b449fc1adef3a88f04, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _characterMove: {fileID: 1042393898}
+  _characterCrouch: {fileID: 1042393897}
+  _characterJump: {fileID: 1042393899}
+  _characterGravity: {fileID: 1042393896}
+  _groundChecker: {fileID: 1042393904}
+  _logActiveStatePath: 0
 --- !u!1 &1086847100
 GameObject:
   m_ObjectHideFlags: 0
@@ -9045,6 +9066,10 @@ PrefabInstance:
     - target: {fileID: 4091744628385212224, guid: 6a200e5d43b76724a895c628d7b76cb7, type: 3}
       propertyPath: m_Name
       value: Player
+      objectReference: {fileID: 0}
+    - target: {fileID: 5436775728411592474, guid: 6a200e5d43b76724a895c628d7b76cb7, type: 3}
+      propertyPath: _logActiveStatePath
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5754172689165299980, guid: 6a200e5d43b76724a895c628d7b76cb7, type: 3}
       propertyPath: m_LocalPosition.x

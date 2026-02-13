@@ -86,6 +86,7 @@ GameObject:
   - component: {fileID: 2818233025018037824}
   - component: {fileID: 8884444090963779118}
   - component: {fileID: 8137631592807362314}
+  - component: {fileID: 5436775728411592474}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -346,6 +347,7 @@ MonoBehaviour:
   _acceleration: 50
   _deceleration: 70
   _input: {fileID: 1978479410493231783}
+  _rigidbody: {fileID: 7698808979737546365}
 --- !u!114 &2818233025018037824
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -389,6 +391,7 @@ MonoBehaviour:
   _maxDownwardSpeed: 200
   _slopeChecker: {fileID: 6922605456415282072}
   _stepChecker: {fileID: 3026518424203180078}
+  _rigidbody: {fileID: 7698808979737546365}
 --- !u!114 &8137631592807362314
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -405,6 +408,24 @@ MonoBehaviour:
   _characterCamera: {fileID: 0}
   _characterParent: {fileID: 4091744628385212224}
   _rotationSmooth: 0.1
+--- !u!114 &5436775728411592474
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4091744628385212224}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 83ca90fc7fc8c7b449fc1adef3a88f04, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _characterMove: {fileID: 8797199533008883986}
+  _characterCrouch: {fileID: 2818233025018037824}
+  _characterJump: {fileID: 7636482674149424828}
+  _characterGravity: {fileID: 8884444090963779118}
+  _groundChecker: {fileID: 5381384936787526104}
+  _logActiveStatePath: 1
 --- !u!1001 &4822671258015347080
 PrefabInstance:
   m_ObjectHideFlags: 0

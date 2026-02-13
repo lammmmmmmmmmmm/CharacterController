@@ -16,20 +16,9 @@ namespace PhysicsCharacterController
         [Header("Dependencies")]
         [SerializeField] private SlopeChecker _slopeChecker;
         [SerializeField] private StepChecker _stepChecker;
+        [SerializeField] private Rigidbody _rigidbody;
 
-        private Rigidbody _rigidbody;
-
-        private void Awake()
-        {
-            _rigidbody = GetComponent<Rigidbody>();
-        }
-
-        private void FixedUpdate()
-        {
-            ApplyGravity();
-        }
-
-        private void ApplyGravity()
+        public void ApplyGravity()
         {
             Vector3 gravity = CalculateBaseGravity();
 

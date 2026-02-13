@@ -10,6 +10,7 @@ namespace PhysicsCharacterController
 	[RequireComponent(typeof(CharacterGravity))]
 	[RequireComponent(typeof(CharacterRotation))]
 	[RequireComponent(typeof(SlopeChecker))]
+	[RequireComponent(typeof(CharacterStateMachine.CharacterStateMachineDriver))]
 	//TODO: Remove this script
 	public class CharacterManager : MonoBehaviour
 	{
@@ -79,7 +80,7 @@ namespace PhysicsCharacterController
 
 		public bool IsRunning()
 		{
-			return _characterMove.IsMoving() && !_characterCrouch.IsCrouching && _groundChecker.IsGrounded;
+			return _characterMove.HasMovementInput && !_characterCrouch.IsCrouching && _groundChecker.IsGrounded;
 		}
 
 		public float GetOriginalColliderHeight()
