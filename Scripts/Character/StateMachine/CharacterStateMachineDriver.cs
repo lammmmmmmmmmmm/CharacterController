@@ -18,6 +18,12 @@ namespace PhysicsCharacterController.CharacterStateMachine
         [SerializeField] private CharacterJump _characterJump;
         [SerializeField] private CharacterGravity _characterGravity;
         [SerializeField] private GroundChecker _groundChecker;
+        [SerializeField] private CharacterAnimator _characterAnimator;
+
+        [Header("Animation Data")]
+        [SerializeField] private LocomotionAnimationDataSO _standingAnimationData;
+        [SerializeField] private LocomotionAnimationDataSO _crouchingAnimationData;
+        [SerializeField] private AirborneAnimationDataSO _airborneAnimationData;
 
         [Header("Debug")]
         [SerializeField] private bool _logActiveStatePath;
@@ -43,7 +49,11 @@ namespace PhysicsCharacterController.CharacterStateMachine
                 _characterCrouch,
                 _characterJump,
                 _characterGravity,
-                _groundChecker);
+                _groundChecker,
+                _characterAnimator,
+                _standingAnimationData,
+                _crouchingAnimationData,
+                _airborneAnimationData);
 
             _root = new CharacterRootState(null, _context);
             _machine = new StateMachineBuilder(_root).Build();

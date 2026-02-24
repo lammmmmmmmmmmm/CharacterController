@@ -4526,7 +4526,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &1042393895
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4880,6 +4880,10 @@ MonoBehaviour:
   _characterJump: {fileID: 1042393899}
   _characterGravity: {fileID: 1042393896}
   _groundChecker: {fileID: 1042393904}
+  _characterAnimator: {fileID: 0}
+  _standingAnimationData: {fileID: 0}
+  _crouchingAnimationData: {fileID: 0}
+  _airborneAnimationData: {fileID: 0}
   _logActiveStatePath: 0
 --- !u!1 &1086847100
 GameObject:
@@ -7551,7 +7555,7 @@ Light:
   m_InnerSpotAngle: 21.80208
   m_CookieSize: 10
   m_Shadows:
-    m_Type: 0
+    m_Type: 1
     m_Resolution: -1
     m_CustomResolution: -1
     m_Strength: 1
@@ -9066,10 +9070,6 @@ PrefabInstance:
     - target: {fileID: 4091744628385212224, guid: 6a200e5d43b76724a895c628d7b76cb7, type: 3}
       propertyPath: m_Name
       value: Player
-      objectReference: {fileID: 0}
-    - target: {fileID: 5436775728411592474, guid: 6a200e5d43b76724a895c628d7b76cb7, type: 3}
-      propertyPath: _logActiveStatePath
-      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5754172689165299980, guid: 6a200e5d43b76724a895c628d7b76cb7, type: 3}
       propertyPath: m_LocalPosition.x

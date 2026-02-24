@@ -18,6 +18,8 @@ namespace PhysicsCharacterController
         [SerializeField] private StepChecker _stepChecker;
         [SerializeField] private Rigidbody _rigidbody;
 
+        public float VerticalVelocity => _rigidbody.linearVelocity.y;
+
         public void ApplyGravity()
         {
             Vector3 gravity = CalculateBaseGravity();

@@ -25,6 +25,12 @@ namespace PhysicsCharacterController.CharacterStateMachine.States
         protected override void OnEnter()
         {
             _context.CharacterCrouch.ApplyStandState();
+            _context.Animator.PlayLinearMixer(_context.StandingAnimationData.LocomotionMixer);
+        }
+
+        protected override void OnFixedUpdate(float fixedDeltaTime)
+        {
+            _context.StandingAnimationData.LocomotionMixer.State.Parameter = _context.CharacterMove.CurrentSpeed;
         }
     }
 }
