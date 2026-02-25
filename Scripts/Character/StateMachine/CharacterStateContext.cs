@@ -11,6 +11,9 @@ namespace PhysicsCharacterController.CharacterStateMachine
         public LocomotionAnimationDataSO StandingAnimationData { get; }
         public LocomotionAnimationDataSO CrouchingAnimationData { get; }
         public AirborneAnimationDataSO AirborneAnimationData { get; }
+        public StateId StandingStateId { get; }
+        public StateId CrouchingStateId { get; }
+        public StateId AirborneStateId { get; }
 
         public CharacterStateContext(
             CharacterMove characterMove,
@@ -21,7 +24,10 @@ namespace PhysicsCharacterController.CharacterStateMachine
             CharacterAnimator animator,
             LocomotionAnimationDataSO standingAnimationData,
             LocomotionAnimationDataSO crouchingAnimationData,
-            AirborneAnimationDataSO airborneAnimationData)
+            AirborneAnimationDataSO airborneAnimationData,
+            StateId standingStateId,
+            StateId crouchingStateId,
+            StateId airborneStateId)
         {
             CharacterMove = characterMove;
             CharacterCrouch = characterCrouch;
@@ -32,6 +38,9 @@ namespace PhysicsCharacterController.CharacterStateMachine
             StandingAnimationData = standingAnimationData;
             CrouchingAnimationData = crouchingAnimationData;
             AirborneAnimationData = airborneAnimationData;
+            StandingStateId = standingStateId;
+            CrouchingStateId = crouchingStateId;
+            AirborneStateId = airborneStateId;
         }
 
         public bool IsGrounded => GroundChecker.IsGrounded;

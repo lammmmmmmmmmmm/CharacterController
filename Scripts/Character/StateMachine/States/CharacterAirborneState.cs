@@ -20,7 +20,7 @@ namespace PhysicsCharacterController.CharacterStateMachine.States
                 return null;
             }
 
-            if (_context.IsGrounded)
+            if (_context.IsGrounded && _context.CharacterGravity.VerticalVelocity <= 0f)
             {
                 return ((CharacterRootState)Parent).Grounded;
             }
@@ -36,6 +36,8 @@ namespace PhysicsCharacterController.CharacterStateMachine.States
 
         protected override void OnFixedUpdate(float fixedDeltaTime)
         {
+            _context.Animator.UpdateTransitionMixerParameter(_context.CharacterMove.CurrentSpeed);
+
             bool isRising = _context.CharacterGravity.VerticalVelocity >= 0f;
 
             if (_isPlayingJumpClip && !isRising)
@@ -49,9 +51,11 @@ namespace PhysicsCharacterController.CharacterStateMachine.States
             var airborneData = _context.AirborneAnimationData;
             _isPlayingJumpClip = isRising;
 
-            _context.Animator.PlayClip(isRising
+            var clip = isRising
                 ? airborneData.JumpClip
-                : airborneData.FallClip);
+                : airborneData.FallClip;
+
+            _context.Animator.SetBase(clip, _context.AirborneStateId, _context.CharacterMove.CurrentSpeed);
         }
     }
 }

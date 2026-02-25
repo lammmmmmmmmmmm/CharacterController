@@ -25,6 +25,11 @@ namespace PhysicsCharacterController.CharacterStateMachine
         [SerializeField] private LocomotionAnimationDataSO _crouchingAnimationData;
         [SerializeField] private AirborneAnimationDataSO _airborneAnimationData;
 
+        [Header("State Ids")]
+        [SerializeField] private StateId _standingStateId;
+        [SerializeField] private StateId _crouchingStateId;
+        [SerializeField] private StateId _airborneStateId;
+
         [Header("Debug")]
         [SerializeField] private bool _logActiveStatePath;
 
@@ -53,7 +58,10 @@ namespace PhysicsCharacterController.CharacterStateMachine
                 _characterAnimator,
                 _standingAnimationData,
                 _crouchingAnimationData,
-                _airborneAnimationData);
+                _airborneAnimationData,
+                _standingStateId,
+                _crouchingStateId,
+                _airborneStateId);
 
             _root = new CharacterRootState(null, _context);
             _machine = new StateMachineBuilder(_root).Build();

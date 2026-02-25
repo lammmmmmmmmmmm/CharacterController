@@ -429,7 +429,10 @@ MonoBehaviour:
   _standingAnimationData: {fileID: 11400000, guid: f31c56cb342e51b458333801bb6786df, type: 2}
   _crouchingAnimationData: {fileID: 11400000, guid: b8028291072454e40b7edf9924109132, type: 2}
   _airborneAnimationData: {fileID: 11400000, guid: 70f3a2aa0b6aa274f997125e88c98523, type: 2}
-  _logActiveStatePath: 1
+  _standingStateId: {fileID: 11400000, guid: 3bb963322e8a2054c9f54af71e864afd, type: 2}
+  _crouchingStateId: {fileID: 11400000, guid: bddf28defe97b944c9ed919edb2d1b0a, type: 2}
+  _airborneStateId: {fileID: 11400000, guid: 616a5754d7f44db4fa750a776090d5c7, type: 2}
+  _logActiveStatePath: 0
 --- !u!114 &9031743307242274759
 MonoBehaviour:
   m_ObjectHideFlags: 0
