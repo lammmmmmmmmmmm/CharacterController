@@ -1,3 +1,4 @@
+using DG.Tweening;
 using UnityEngine;
 
 namespace PhysicsCharacterController
@@ -9,6 +10,8 @@ namespace PhysicsCharacterController
         [SerializeField] private float _crouchSpeedMultiplier = 0.248f;
         [Tooltip("Multiplier applied to the collider when player is crouching")]
         [SerializeField] private float _crouchHeightMultiplier = 0.5f;
+        [Tooltip("Duration of the crouch/stand transition in seconds")]
+        [SerializeField] private float _transitionDurationSeconds = 0.2f;
 
         [Header("Head Position")]
         [Tooltip("FP camera head height")]
@@ -25,10 +28,6 @@ namespace PhysicsCharacterController
         [Header("References")]
         [Tooltip("Head reference")]
         [SerializeField] private Transform _headPoint;
-        [Tooltip("Default character mesh")]
-        [SerializeField] private GameObject _meshCharacter;
-        [Tooltip("Crouch character mesh")]
-        [SerializeField] private GameObject _meshCharacterCrouch;
         [SerializeField] private GroundChecker _groundChecker;
         [SerializeField] private BaseCharacterInput _input;
 
@@ -36,6 +35,8 @@ namespace PhysicsCharacterController
         private float _originalColliderHeight;
         private bool _isCrouching;
         private bool _wantsToCrouch;
+        private float _transitionProgress;
+        private Tweener _transitionTween;
 
         public bool IsCrouching => _isCrouching;
         public bool WantsToCrouch => _wantsToCrouch;
@@ -56,6 +57,11 @@ namespace PhysicsCharacterController
         private void OnDisable()
         {
             _input.OnCrouch -= OnCrouchInput;
+        }
+
+        private void OnDestroy()
+        {
+            _transitionTween?.Kill();
         }
 
         private void OnCrouchInput(bool wantsToCrouch)
@@ -118,56 +124,43 @@ namespace PhysicsCharacterController
         public void ApplyCrouchState()
         {
             _isCrouching = true;
-
-            UpdateMeshVisibility(isCrouching: true);
-            UpdateCollider(isCrouching: true);
-            UpdateHeadPosition(_povCrouchHeadHeight);
+            TransitionTo(targetProgress: 1f);
         }
 
         public void ApplyStandState()
         {
             _isCrouching = false;
-
-            UpdateMeshVisibility(isCrouching: false);
-            UpdateCollider(isCrouching: false);
-            UpdateHeadPosition(_povNormalHeadHeight);
+            TransitionTo(targetProgress: 0f);
         }
 
-        private void UpdateMeshVisibility(bool isCrouching)
+        private void TransitionTo(float targetProgress)
         {
-            //TODO: abstract this
-            if (_meshCharacterCrouch && _meshCharacter)
-            {
-                _meshCharacter.SetActive(!isCrouching);
-            }
+            _transitionTween?.Kill();
 
-            if (_meshCharacterCrouch)
-            {
-                _meshCharacterCrouch.SetActive(isCrouching);
-            }
+            float remainingRatio = Mathf.Abs(targetProgress - _transitionProgress);
+            float scaledDurationSeconds = _transitionDurationSeconds * remainingRatio;
+
+            _transitionTween = DOTween
+                .To(() => _transitionProgress, value => _transitionProgress = value, targetProgress, scaledDurationSeconds)
+                .SetEase(Ease.OutQuad)
+                .OnUpdate(ApplyTransitionProgress)
+                .SetLink(gameObject);
+
+            ApplyTransitionProgress();
         }
 
-        private void UpdateCollider(bool isCrouching)
+        private void ApplyTransitionProgress()
         {
-            if (isCrouching)
-            {
-                float newHeight = _originalColliderHeight * _crouchHeightMultiplier;
-                _collider.height = newHeight;
-                _collider.center = new Vector3(0f, -newHeight * _crouchHeightMultiplier, 0f);
-            }
-            else
-            {
-                _collider.height = _originalColliderHeight;
-                _collider.center = Vector3.zero;
-            }
-        }
+            float crouchedHeight = _originalColliderHeight * _crouchHeightMultiplier;
 
-        private void UpdateHeadPosition(Vector3 headOffset)
-        {
-            _headPoint.position = new Vector3(
-                transform.position.x + headOffset.x,
-                transform.position.y + headOffset.y,
-                transform.position.z + headOffset.z);
+            float height = Mathf.Lerp(_originalColliderHeight, crouchedHeight, _transitionProgress);
+            float centerY = Mathf.Lerp(0f, -crouchedHeight * _crouchHeightMultiplier, _transitionProgress);
+
+            _collider.height = height;
+            _collider.center = new Vector3(0f, centerY, 0f);
+
+            Vector3 headOffset = Vector3.Lerp(_povNormalHeadHeight, _povCrouchHeadHeight, _transitionProgress);
+            _headPoint.position = transform.position + headOffset;
         }
 
         public float GetSpeedMultiplier(Vector3 intendedDirection)
