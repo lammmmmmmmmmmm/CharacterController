@@ -36,11 +36,13 @@ MonoBehaviour:
         _Names: []
       _Animations:
       - {fileID: 8232730923502177427, guid: b3f40610e0721964c9679e65bd5a61bd, type: 3}
+      - {fileID: 8177929354538030626, guid: 0ad48af31f611b94fba9833e4fc50476, type: 3}
       - {fileID: 5490587425831455267, guid: d13c8ea1e9491a4438f8d589acaa9b03, type: 3}
       _Speeds: []
       _SynchronizeChildren: 
       _Thresholds:
       - 0
+      - 5
       - 10
       _DefaultParameter: 0
       _ExtrapolateSpeed: 1
@@ -71,7 +73,7 @@ MonoBehaviour:
       - {fileID: -998496362607748373, guid: 0ad48af31f611b94fba9833e4fc50476, type: 3}
       - {fileID: 8252669403298163198, guid: d13c8ea1e9491a4438f8d589acaa9b03, type: 3}
       _Speeds: []
-      _SynchronizeChildren: 
+      _SynchronizeChildren: 00
       _Thresholds:
       - 0
       - 5
@@ -101,13 +103,13 @@ MonoBehaviour:
         _Callbacks: []
         _Names: []
       _Animations:
-      - {fileID: 1827226128182048838, guid: 52a2eb3158000934eb33267c807b8b15, type: 3}
+      - {fileID: 1827226128182048838, guid: 4aa2c6426b53b8248a11e4c9df8fe329, type: 3}
       - {fileID: 1827226128182048838, guid: db828642e342e7a469d83568b41af133, type: 3}
       _Speeds: []
       _SynchronizeChildren: 
       _Thresholds:
       - 0
-      - 2
+      - 1
       _DefaultParameter: 0
       _ExtrapolateSpeed: 1
       _ParameterName: {fileID: 0}

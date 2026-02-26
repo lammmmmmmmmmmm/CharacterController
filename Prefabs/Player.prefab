@@ -180,19 +180,7 @@ MonoBehaviour:
   _minimumVerticalSpeedToLightLandEvent: 5
   _onLightLand:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 0}
-        m_TargetAssemblyTypeName: PhysicsCharacterController.VFXManager, Assembly-CSharp
-        m_MethodName: ParticleLand
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []
 --- !u!114 &5381384936787526104
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -344,8 +332,8 @@ MonoBehaviour:
   _movementSpeed: 5
   _sprintSpeed: 10
   _movementThreshold: 0.01
-  _acceleration: 50
-  _deceleration: 70
+  _acceleration: 20
+  _deceleration: 20
   _input: {fileID: 1978479410493231783}
   _rigidbody: {fileID: 7698808979737546365}
 --- !u!114 &2818233025018037824

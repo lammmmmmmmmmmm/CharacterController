@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Crouch Locomotion Animation Data
   m_EditorClassIdentifier: 
   _locomotionMixer:
-    _FadeDuration: 0.2
+    _FadeDuration: 0.25
     _Speed: 1
     _Events:
       _NormalizedTimes: []
@@ -26,7 +26,7 @@ MonoBehaviour:
     _SynchronizeChildren: 00
     _Thresholds:
     - 0
-    - 7
+    - 1.25
     _DefaultParameter: 0
     _ExtrapolateSpeed: 1
     _ParameterName: {fileID: 0}

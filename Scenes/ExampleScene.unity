@@ -9066,10 +9066,6 @@ PrefabInstance:
       propertyPath: _characterCamera
       value: 
       objectReference: {fileID: 963194225}
-    - target: {fileID: 2649054290867484457, guid: 6a200e5d43b76724a895c628d7b76cb7, type: 3}
-      propertyPath: _onLightLand.m_PersistentCalls.m_Calls.Array.data[0].m_Target
-      value: 
-      objectReference: {fileID: 8724451}
     - target: {fileID: 4091744628385212224, guid: 6a200e5d43b76724a895c628d7b76cb7, type: 3}
       propertyPath: m_Name
       value: Player
