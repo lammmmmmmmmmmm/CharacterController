@@ -149,7 +149,13 @@ namespace PhysicsCharacterController
                 return;
             }
 
-            _queuedBaseSourceSpeed = _activeTransitionMixer.State.Parameter;
+            // The transition may be a clip (no mixer), or the mixer may have been nulled by
+            // UpdateTransitionMixerParameter when its state was momentarily invalid. In either
+            // case the queue-time speed seeded in QueueBaseAnimation remains the correct value.
+            if (_activeTransitionMixer != null && IsRuntimeStateValid(_activeTransitionMixer.State))
+            {
+                _queuedBaseSourceSpeed = _activeTransitionMixer.State.Parameter;
+            }
 
             _isTransitionPlayingOnBaseLayer = false;
             _activeTransitionMixer = null;
