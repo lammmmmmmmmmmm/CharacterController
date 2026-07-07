@@ -34,10 +34,13 @@ namespace PhysicsCharacterController
         private bool _hasCoyoteTime;
         private float _coyoteTimeCounter;
 
+        // Sliding down an unclimbable slope constantly toggles grounded state; granting coyote
+        // windows there would let the player jump off a surface they are not allowed to jump from.
         private bool ShouldStartCoyoteTime =>
             !_groundChecker.IsGrounded &&
             _groundChecker.WasGrounded &&
-            _rigidbody.linearVelocity.y < -0.5f;
+            _rigidbody.linearVelocity.y < -0.5f &&
+            !_slopeChecker.WasLastGroundedSurfaceUnclimbable;
 
         private void Awake()
         {

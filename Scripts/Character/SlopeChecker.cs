@@ -36,6 +36,13 @@ namespace PhysicsCharacterController
         public float CurrentSurfaceAngle => _currentSurfaceAngle;
         public float MaxClimbableSlopeAngle => _maxClimbableSlopeAngle;
         public bool IsTouchingSlope => _isTouchingSlope;
+
+        /// <summary>
+        /// Unlike IsUnclimbableSlope this survives going airborne, so consumers like coyote time
+        /// can still know what surface the character just left.
+        /// </summary>
+        public bool WasLastGroundedSurfaceUnclimbable { get; private set; }
+
         public bool IsSlidePreventionActive => _isSlidePreventionActive;
         public Vector3 GroundNormal => _groundNormal;
         public Vector3 PreviousGroundNormal => _previousGroundNormal;
@@ -71,6 +78,13 @@ namespace PhysicsCharacterController
         public Vector3 GetVelocityContribution(Vector3 currentVelocity, Vector3 desiredMovement)
         {
             if (!_isTouchingSlope)
+            {
+                return Vector3.zero;
+            }
+
+            // An unclimbable surface acts as a wall: aligning movement onto it would re-add the
+            // horizontal push that WallChecker cancels, and the two fighting reads as shaking.
+            if (IsUnclimbableSlope())
             {
                 return Vector3.zero;
             }
@@ -119,12 +133,14 @@ namespace PhysicsCharacterController
 
             _currentSurfaceAngle = 0f;
             _isTouchingSlope = false;
+            WasLastGroundedSurfaceUnclimbable = false;
         }
 
         private void ApplySlopeState(RaycastHit groundHit, Vector3 horizontalInputForward)
         {
             _currentSurfaceAngle = Vector3.Angle(Vector3.up, groundHit.normal);
             _isTouchingSlope = true;
+            WasLastGroundedSurfaceUnclimbable = IsUnclimbableSlope();
 
             _slopeAlignedForward = Vector3.ProjectOnPlane(horizontalInputForward, groundHit.normal).normalized;
 

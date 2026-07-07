@@ -40,6 +40,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3564097700261540322}
+  - component: {fileID: 85264249104969769}
   m_Layer: 0
   m_Name: Mesh
   m_TagString: Untagged
@@ -63,6 +64,26 @@ Transform:
   - {fileID: 3704082401264464421}
   m_Father: {fileID: 5754172689165299980}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &85264249104969769
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3908670190165663123}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 703bf572d01a19a40939447024d8103d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PhysicsCharacterController.CharacterMeshSmoother
+  _groundChecker: {fileID: 5381384936787526104}
+  _verticalSmoothing:
+    _groundedSmoothTimeSeconds: 0.15
+    _airborneSmoothTimeSeconds: 0.05
+    _airborneActivationDelaySeconds: 0.1
+  _maxVerticalOffsetMeters: 0.25
+  _horizontalSmoothTimeSeconds: 0.06
+  _maxHorizontalOffsetMeters: 0.1
 --- !u!1 &4091744628385212224
 GameObject:
   m_ObjectHideFlags: 0
@@ -158,7 +179,7 @@ Rigidbody:
   m_ImplicitTensor: 1
   m_UseGravity: 0
   m_IsKinematic: 0
-  m_Interpolate: 0
+  m_Interpolate: 1
   m_Constraints: 112
   m_CollisionDetection: 0
 --- !u!114 &2649054290867484457
@@ -229,7 +250,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d05ca998545fdc542a56894fc049e53b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _checkDistance: 0.8
+  _checkDistance: 0.6
   _heightOffset: 0.5
   _wallMask:
     serializedVersion: 2

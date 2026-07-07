@@ -4528,7 +4528,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _checkDistance: 0.8
-  _heightOffset: 0.5
+  _checkHeightOffsetsMeters:
+  - 0
+  - 0.5
   _wallMask:
     serializedVersion: 2
     m_Bits: 1
@@ -9799,6 +9801,22 @@ PrefabInstance:
     - target: {fileID: 850410301166958330, guid: c47a17ba764f3ef4db5fff99e93df6c6, type: 3}
       propertyPath: m_LocalPosition.z
       value: -193.3
+      objectReference: {fileID: 0}
+    - target: {fileID: 850410301166958330, guid: c47a17ba764f3ef4db5fff99e93df6c6, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 850410301166958330, guid: c47a17ba764f3ef4db5fff99e93df6c6, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 850410301166958330, guid: c47a17ba764f3ef4db5fff99e93df6c6, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 850410301166958330, guid: c47a17ba764f3ef4db5fff99e93df6c6, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 850410301166958330, guid: c47a17ba764f3ef4db5fff99e93df6c6, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x

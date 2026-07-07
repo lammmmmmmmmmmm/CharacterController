@@ -160,7 +160,9 @@ namespace PhysicsCharacterController
             _collider.center = new Vector3(0f, centerY, 0f);
 
             Vector3 headOffset = Vector3.Lerp(_povNormalHeadHeight, _povCrouchHeadHeight, _transitionProgress);
-            _headPoint.position = transform.position + headOffset;
+            // Local space, not world: a world-space offset ignores character yaw, so re-applying it
+            // after a rotation teleports the head point and makes the tracking camera snap.
+            _headPoint.localPosition = headOffset;
         }
 
         public float GetSpeedMultiplier(Vector3 intendedDirection)
