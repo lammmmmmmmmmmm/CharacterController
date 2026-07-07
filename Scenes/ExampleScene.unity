@@ -4535,6 +4535,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 1
   _input: {fileID: 1042393910}
+  _slopeChecker: {fileID: 0}
   _debug: 0
   _debugForwardDirection: {x: 0, y: 0, z: 1}
 --- !u!114 &1042393903

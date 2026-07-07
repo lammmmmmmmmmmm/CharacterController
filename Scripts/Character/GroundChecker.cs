@@ -6,6 +6,8 @@ namespace PhysicsCharacterController
     /// Performs ground detection using sphere checks.
     /// Attach to the character and configure via Inspector.
     /// </summary>
+    // Must evaluate before SlopeChecker and all other consumers each physics tick.
+    [DefaultExecutionOrder(-20)]
     public class GroundChecker : MonoBehaviour
     {
         [SerializeField] private LayerMask _groundMask;

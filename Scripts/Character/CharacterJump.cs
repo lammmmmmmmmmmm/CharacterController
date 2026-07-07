@@ -74,9 +74,12 @@ namespace PhysicsCharacterController
         public bool TryExecuteJump()
         {
             bool shouldExecuteRequestedJump = _hasJumpRequested && CanJumpNow();
+            // Evaluate the landing surface from the fresh ground hit: SlopeChecker's cached state
+            // is one tick stale on the landing tick, which let buffered jumps fire off
+            // unclimbable slopes.
             bool shouldExecuteBufferedJump = _hasJumpBuffered
                                             && _groundChecker.JustLanded
-                                            && !_slopeChecker.IsUnclimbableSlope();
+                                            && !_slopeChecker.IsSurfaceUnclimbable(_groundChecker.GroundHit.normal);
 
             if (!shouldExecuteRequestedJump && !shouldExecuteBufferedJump)
             {
@@ -93,7 +96,8 @@ namespace PhysicsCharacterController
 
         private bool CanJumpNow()
         {
-            bool canJumpFromGround = _groundChecker.IsGrounded && !_slopeChecker.IsUnclimbableSlope();
+            bool canJumpFromGround = _groundChecker.IsGrounded
+                                     && !_slopeChecker.IsSurfaceUnclimbable(_groundChecker.GroundHit.normal);
             bool canJumpFromCoyoteWindow = _hasCoyoteTime;
             return canJumpFromGround || canJumpFromCoyoteWindow;
         }

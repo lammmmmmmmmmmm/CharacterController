@@ -2,6 +2,9 @@ using UnityEngine;
 
 namespace PhysicsCharacterController
 {
+    // Must evaluate after GroundChecker and before consumers (jump, gravity, state machine),
+    // otherwise they read slope state that is one physics tick stale on landing.
+    [DefaultExecutionOrder(-10)]
     public class SlopeChecker : MonoBehaviour, IMovementModifier, IVelocityModifier
     {
         private const float DOT_THRESHOLD_MOVING_UP_SLOPE = 0.1f;
@@ -82,8 +85,8 @@ namespace PhysicsCharacterController
                 return Vector3.zero;
             }
 
-            // An unclimbable surface acts as a wall: aligning movement onto it would re-add the
-            // horizontal push that WallChecker cancels, and the two fighting reads as shaking.
+            // An unclimbable surface acts as a wall. WallChecker owns the push cancellation via
+            // collision contacts; cancelling here as well would double up and reverse the push.
             if (IsUnclimbableSlope())
             {
                 return Vector3.zero;
@@ -207,6 +210,16 @@ namespace PhysicsCharacterController
         public bool IsUnclimbableSlope()
         {
             return _currentSurfaceAngle > _maxClimbableSlopeAngle;
+        }
+
+        /// <summary>
+        /// Stateless variant for callers that need a fresh answer about a specific surface,
+        /// e.g. jump gates on the landing tick, when this checker's cached state can be one
+        /// tick stale.
+        /// </summary>
+        public bool IsSurfaceUnclimbable(Vector3 surfaceNormal)
+        {
+            return Vector3.Angle(Vector3.up, surfaceNormal) > _maxClimbableSlopeAngle;
         }
 
 #if UNITY_EDITOR

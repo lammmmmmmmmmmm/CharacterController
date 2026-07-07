@@ -82,6 +82,8 @@ MonoBehaviour:
     _airborneSmoothTimeSeconds: 0.05
     _airborneActivationDelaySeconds: 0.1
   _maxVerticalOffsetMeters: 0.25
+  _fullRoughnessNormalRateDegreesPerSecond: 60
+  _roughnessReleaseSeconds: 0.4
   _horizontalSmoothTimeSeconds: 0.06
   _maxHorizontalOffsetMeters: 0.1
 --- !u!1 &4091744628385212224
@@ -251,11 +253,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _checkDistance: 0.6
-  _heightOffset: 0.5
+  _checkHeightOffsetsMeters:
+  - 0
+  - 0.5
   _wallMask:
     serializedVersion: 2
-    m_Bits: 1
+    m_Bits: 73
   _input: {fileID: 1978479410493231783}
+  _slopeChecker: {fileID: 6922605456415282072}
   _debug: 0
   _debugForwardDirection: {x: 0, y: 0, z: 1}
 --- !u!114 &6922605456415282072
@@ -295,7 +300,7 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
-  _preventSlideOnSlope: 0
+  _preventSlideOnSlope: 1
   _groundChecker: {fileID: 5381384936787526104}
   _characterMove: {fileID: 8797199533008883986}
   _input: {fileID: 1978479410493231783}
