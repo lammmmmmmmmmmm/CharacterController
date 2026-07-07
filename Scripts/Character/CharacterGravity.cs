@@ -2,9 +2,19 @@ using UnityEngine;
 
 namespace PhysicsCharacterController
 {
+    /// <summary>
+    /// Applies gravity to the character, boosted while sliding on changing ground or standing on
+    /// unclimbable slopes. Boosts only apply near vertical rest: during jump lift-off they would
+    /// eat launch velocity, and when walking off an edge the ground check still sees the cliff
+    /// lip as a steep slope for several ticks, which would slam the character downward instead
+    /// of letting it fall naturally.
+    /// </summary>
     [RequireComponent(typeof(Rigidbody))]
     public class CharacterGravity : MonoBehaviour
     {
+        private const float BOOST_MAX_ASCENT_SPEED_METERS_PER_SECOND = 0.1f;
+        private const float BOOST_MAX_FALL_SPEED_METERS_PER_SECOND = 1.5f;
+
         [Header("Gravity Settings")]
         [SerializeField] private float _gravityMultiplier = 6f;
         [Tooltip("Multiplier factor for gravity used on change of normal")]
@@ -24,20 +34,31 @@ namespace PhysicsCharacterController
         {
             Vector3 gravity = CalculateBaseGravity();
 
-            if (HasGroundNormalChanged())
+            if (IsNearVerticalRest())
             {
-                gravity *= _gravityMultiplierOnSlideChange;
-            }
+                if (HasGroundNormalChanged())
+                {
+                    gravity *= _gravityMultiplierOnSlideChange;
+                }
 
-            if (IsOnUnclimbableSlope())
-            {
-                gravity = CalculateUnclimbableSlopeGravity();
+                if (IsOnUnclimbableSlope())
+                {
+                    gravity = CalculateUnclimbableSlopeGravity();
+                }
             }
 
             if (_rigidbody.linearVelocity.y > -_maxDownwardSpeed)
             {
                 _rigidbody.AddForce(gravity);
             }
+        }
+
+        private bool IsNearVerticalRest()
+        {
+            float verticalSpeedMetersPerSecond = _rigidbody.linearVelocity.y;
+
+            return verticalSpeedMetersPerSecond < BOOST_MAX_ASCENT_SPEED_METERS_PER_SECOND
+                   && verticalSpeedMetersPerSecond > -BOOST_MAX_FALL_SPEED_METERS_PER_SECOND;
         }
 
         private Vector3 CalculateBaseGravity()
