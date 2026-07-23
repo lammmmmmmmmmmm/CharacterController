@@ -5,6 +5,10 @@ using UnityEngine.InputSystem;
 
 namespace PhysicsCharacterController
 {
+	/// <summary>
+    /// Converts camera input into first-person pan and tilt axis values and ignores input while the
+    /// shared LockCursor component reports an unlocked cursor.
+	/// </summary>
     public class FirstPersonCameraController : MonoBehaviour
     {
         [Header("Camera controls")]
@@ -12,6 +16,7 @@ namespace PhysicsCharacterController
         public float smoothSpeed = 0.01f;
 
         [SerializeField] private InputActionReference cameraActionReference;
+        [SerializeField] private LockCursor _lockCursor;
         
         private CinemachinePOV _cinemachinePov;
 
@@ -29,6 +34,13 @@ namespace PhysicsCharacterController
 
         private void Update()
         {
+            bool isCursorLocked = _lockCursor.IsCursorLocked;
+
+            if (!isCursorLocked)
+            {
+                return;
+            }
+
             _input += cameraActionReference.action.ReadValue<Vector2>() * mouseSensitivity * new Vector2(0.01f, 0.001f);
 
             if (_input.y > _cinemachinePov.m_VerticalAxis.m_MaxValue) _input.y = _cinemachinePov.m_VerticalAxis.m_MaxValue;

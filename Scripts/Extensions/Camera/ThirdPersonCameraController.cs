@@ -4,9 +4,14 @@ using UnityEngine.InputSystem;
 
 namespace PhysicsCharacterController
 {
+	/// <summary>
+	/// Converts camera input into third-person orbital axis values and ignores input while the shared
+	/// LockCursor component reports an unlocked cursor.
+	/// </summary>
 	public class ThirdPersonCameraController : MonoBehaviour
 	{
 		[SerializeField] private InputActionReference _cameraActionReference;
+		[SerializeField] private LockCursor _lockCursor;
 
 		[Header("Camera controls")]
 		[SerializeField] private Vector2 _mouseSensitivity = new(5f, 1f);
@@ -30,6 +35,13 @@ namespace PhysicsCharacterController
 
 		private void Update()
 		{
+			bool isCursorLocked = _lockCursor.IsCursorLocked;
+
+			if (!isCursorLocked)
+			{
+				return;
+			}
+
 			_input += _cameraActionReference.action.ReadValue<Vector2>() * _mouseSensitivity * new Vector2(0.01f, 0.001f);
 
 			if (_input.y > 1f) _input.y = 1f;
