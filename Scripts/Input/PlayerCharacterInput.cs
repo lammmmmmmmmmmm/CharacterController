@@ -20,18 +20,14 @@ namespace PhysicsCharacterController
 
 		private void OnEnable()
 		{
-			_moveAction.action.Enable();
 			_moveAction.action.performed += OnMoveActionPerformed;
 			_moveAction.action.canceled += OnMoveActionCanceled;
 
-			_jumpAction.action.Enable();
 			_jumpAction.action.started += OnJumpAction;
 
-			_sprintAction.action.Enable();
 			_sprintAction.action.started += OnSprintActionStarted;
 			_sprintAction.action.canceled += OnSprintActionEnded;
 
-			_crouchAction.action.Enable();
 			_crouchAction.action.started += OnCrouchAction;
 			_crouchAction.action.canceled += OnCrouchActionEnded;
 		}
@@ -40,18 +36,14 @@ namespace PhysicsCharacterController
 		{
 			_moveAction.action.performed -= OnMoveActionPerformed;
 			_moveAction.action.canceled -= OnMoveActionCanceled;
-			_moveAction.action.Disable();
 
 			_jumpAction.action.started -= OnJumpAction;
-			_jumpAction.action.Disable();
 
 			_sprintAction.action.started -= OnSprintActionStarted;
 			_sprintAction.action.canceled -= OnSprintActionEnded;
-			_sprintAction.action.Disable();
 
 			_crouchAction.action.started -= OnCrouchAction;
 			_crouchAction.action.canceled -= OnCrouchActionEnded;
-			_crouchAction.action.Disable();
 		}
 
 		public override Vector2 GetMoveInput()

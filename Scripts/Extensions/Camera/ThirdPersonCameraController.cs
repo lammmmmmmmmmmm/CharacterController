@@ -5,8 +5,9 @@ using UnityEngine.InputSystem;
 namespace PhysicsCharacterController
 {
 	/// <summary>
-	/// Converts camera input into third-person orbital axis values and ignores input while the shared
-	/// LockCursor component reports an unlocked cursor.
+	/// Converts camera input into smoothed third-person orbital axis values. Desktop input is accepted
+	/// only while the shared cursor is locked; mobile and Device Simulator input ignores cursor state
+	/// because touch camera control does not use a desktop cursor.
 	/// </summary>
 	public class ThirdPersonCameraController : MonoBehaviour
 	{
@@ -28,16 +29,10 @@ namespace PhysicsCharacterController
 			_orbitalFollow = GetComponent<CinemachineOrbitalFollow>();
 		}
 
-		private void OnEnable()
-		{
-			_cameraActionReference.action.Enable();
-		}
-
 		private void Update()
 		{
-			bool isCursorLocked = _lockCursor.IsCursorLocked;
-
-			if (!isCursorLocked)
+			bool canReadCameraInput = UnityEngine.Device.Application.isMobilePlatform || _lockCursor.IsCursorLocked;
+			if (!canReadCameraInput)
 			{
 				return;
 			}
@@ -50,11 +45,6 @@ namespace PhysicsCharacterController
 			_currentInputVector = Vector2.SmoothDamp(_currentInputVector, _input, ref _smoothVelocity, _smoothSpeed);
 			_orbitalFollow.HorizontalAxis.Value = _currentInputVector.x;
 			_orbitalFollow.VerticalAxis.Value = 1 - _currentInputVector.y;
-		}
-
-		private void OnDisable()
-		{
-			_cameraActionReference.action.Disable();
 		}
 
 		public void SetInitialValue(float valueX, float valueY)

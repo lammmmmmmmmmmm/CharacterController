@@ -3,9 +3,10 @@ using UnityEngine;
 namespace PhysicsCharacterController
 {
 	/// <summary>
-	/// Owns the application's cursor lock state and exposes explicit operations for other systems.
-	/// Editor keyboard input is intentionally handled by LockCursorEditorInput so menus and other
-	/// runtime systems can reuse this component without depending on editor-only input wiring.
+	/// Owns cursor locking for desktop players and exposes explicit operations for camera and menu
+	/// systems. Mobile platforms always keep the cursor unlocked because their camera controllers use
+	/// touch input independently of cursor state. Editor keyboard input remains in
+	/// LockCursorEditorInput so this component has no editor-only input dependency.
 	/// </summary>
 	public class LockCursor : MonoBehaviour
 	{
@@ -31,8 +32,9 @@ namespace PhysicsCharacterController
 
 		public void SetCursorLock(bool shouldLockCursor)
 		{
-			Cursor.lockState = shouldLockCursor ? CursorLockMode.Locked : CursorLockMode.None;
-			Cursor.visible = !shouldLockCursor;
+			bool isCursorLocked = shouldLockCursor && !UnityEngine.Device.Application.isMobilePlatform;
+			Cursor.lockState = isCursorLocked ? CursorLockMode.Locked : CursorLockMode.None;
+			Cursor.visible = !isCursorLocked;
 		}
 
 		#endregion

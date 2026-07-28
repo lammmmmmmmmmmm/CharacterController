@@ -6,8 +6,9 @@ using UnityEngine.InputSystem;
 namespace PhysicsCharacterController
 {
 	/// <summary>
-    /// Converts camera input into first-person pan and tilt axis values and ignores input while the
-    /// shared LockCursor component reports an unlocked cursor.
+    /// Converts camera input into smoothed first-person pan and tilt values. Desktop input is accepted
+    /// only while the shared cursor is locked; mobile and Device Simulator input ignores cursor state
+    /// because touch camera control does not use a desktop cursor.
 	/// </summary>
     public class FirstPersonCameraController : MonoBehaviour
     {
@@ -34,9 +35,8 @@ namespace PhysicsCharacterController
 
         private void Update()
         {
-            bool isCursorLocked = _lockCursor.IsCursorLocked;
-
-            if (!isCursorLocked)
+            bool canReadCameraInput = UnityEngine.Device.Application.isMobilePlatform || _lockCursor.IsCursorLocked;
+            if (!canReadCameraInput)
             {
                 return;
             }

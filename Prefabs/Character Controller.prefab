@@ -218,7 +218,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _groundMask:
     serializedVersion: 2
-    m_Bits: 8
+    m_Bits: 1
   _checkRadius: 0.5
   _feetOffset: 0.6
 --- !u!114 &3026518424203180078
@@ -235,7 +235,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _groundMask:
     serializedVersion: 2
-    m_Bits: 8
+    m_Bits: 1
   _stepCheckerThreshold: 0.6
   _maxStepHeight: 0.7
   _stepUpForce: 1.5
@@ -258,7 +258,7 @@ MonoBehaviour:
   - 0.5
   _wallMask:
     serializedVersion: 2
-    m_Bits: 73
+    m_Bits: 1
   _input: {fileID: 1978479410493231783}
   _slopeChecker: {fileID: 6922605456415282072}
   _debug: 0
