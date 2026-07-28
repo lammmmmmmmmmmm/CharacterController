@@ -1,7 +1,12 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 namespace PhysicsCharacterController
 {
+    /// <summary>
+    /// Spawns jump and landing particles at the character's feet.
+    /// The feet position comes from CharacterColliderShape, so effects remain aligned when the
+    /// character uses either a capsule or box collider.
+    /// </summary>
     public class VFXManager : MonoBehaviour
     {
         [Header("Particle references")]
@@ -14,21 +19,24 @@ namespace PhysicsCharacterController
         [Space(10)]
         public bool enableVFX;
 
-        private CapsuleCollider _collider;
+        private CharacterColliderShape _characterColliderShape;
+
+        #region Unity Lifecycle
 
         private void Awake()
         {
-            _collider = characterManager.GetComponent<CapsuleCollider>();
+            _characterColliderShape = characterManager.GetComponent<CharacterColliderShape>();
         }
+
+        #endregion
+
+        #region Public Methods
 
         public void ParticleJump()
         {
             if (enableVFX)
             {
-                GameObject tmpObj = Instantiate(particleJump,
-                    characterManager.transform.position - new Vector3(0f, _collider.height / 2f, 0f),
-                    Quaternion.identity);
-                tmpObj.transform.parent = transform;
+                SpawnAtCharacterFeet(particleJump);
             }
         }
 
@@ -36,11 +44,22 @@ namespace PhysicsCharacterController
         {
             if (enableVFX)
             {
-                GameObject tmpObj = Instantiate(particleLand,
-                    characterManager.transform.position - new Vector3(0f, _collider.height / 2f, 0f),
-                    Quaternion.identity);
-                tmpObj.transform.parent = transform;
+                SpawnAtCharacterFeet(particleLand);
             }
         }
+
+        #endregion
+
+        #region Private Methods
+
+        private void SpawnAtCharacterFeet(GameObject particlePrefab)
+        {
+            Vector3 feetPosition = characterManager.transform.position
+                - Vector3.up * _characterColliderShape.FeetOffsetMeters;
+            GameObject particle = Instantiate(particlePrefab, feetPosition, Quaternion.identity);
+            particle.transform.parent = transform;
+        }
+
+        #endregion
     }
 }

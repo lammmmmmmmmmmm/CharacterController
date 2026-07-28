@@ -1,91 +1,106 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.Events;
 
 namespace PhysicsCharacterController
 {
-	[RequireComponent(typeof(CapsuleCollider))]
-	[RequireComponent(typeof(Rigidbody))]
-	[RequireComponent(typeof(CharacterMove))]
-	[RequireComponent(typeof(CharacterCrouch))]
-	[RequireComponent(typeof(CharacterGravity))]
-	[RequireComponent(typeof(CharacterRotation))]
-	[RequireComponent(typeof(SlopeChecker))]
-	[RequireComponent(typeof(CharacterStateMachine.CharacterStateMachineDriver))]
-	//TODO: Remove this script
-	public class CharacterManager : MonoBehaviour
-	{
-		[Header("Character components")]
-		[SerializeField] private CharacterMove _characterMove;
-		[SerializeField] private CharacterCrouch _characterCrouch;
+    /// <summary>
+    /// Coordinates shared character state, landing events, collider friction, and step measurements.
+    /// Collider geometry comes from a CharacterColliderShape component, allowing the controller to
+    /// use different physical shapes without leaking shape-specific logic into character behavior.
+    /// </summary>
+    [RequireComponent(typeof(Rigidbody))]
+    [RequireComponent(typeof(CharacterMove))]
+    [RequireComponent(typeof(CharacterCrouch))]
+    [RequireComponent(typeof(CharacterGravity))]
+    [RequireComponent(typeof(CharacterRotation))]
+    [RequireComponent(typeof(SlopeChecker))]
+    [RequireComponent(typeof(CharacterStateMachine.CharacterStateMachineDriver))]
+    public class CharacterManager : MonoBehaviour
+    {
+        [Header("Character components")]
+        [SerializeField] private CharacterMove _characterMove;
+        [SerializeField] private CharacterCrouch _characterCrouch;
 
-		[Header("Checkers")]
-		[SerializeField] private GroundChecker _groundChecker;
-		[SerializeField] private StepChecker _stepChecker;
+        [Header("Checkers")]
+        [SerializeField] private GroundChecker _groundChecker;
+        [SerializeField] private StepChecker _stepChecker;
 
-		[Header("Events")]
-		[SerializeField] private float _minimumVerticalSpeedToLightLandEvent;
-		[SerializeField] private UnityEvent _onLightLand;
+        [Header("Events")]
+        [SerializeField] private float _minimumVerticalSpeedToLightLandEvent;
+        [SerializeField] private UnityEvent _onLightLand;
 
-		private Rigidbody _rigidbody;
-		private CapsuleCollider _collider;
-		private float _originalColliderHeight;
+        private Rigidbody _rigidbody;
+        private CharacterColliderShape _characterColliderShape;
+        private float _previousYVelocity;
 
-		private float _previousYVelocity;
+        #region Unity Lifecycle
 
-		private void Awake()
-		{
-			_rigidbody = GetComponent<Rigidbody>();
-			_collider = GetComponent<CapsuleCollider>();
-			_originalColliderHeight = _collider.height;
+        private void Awake()
+        {
+            _rigidbody = GetComponent<Rigidbody>();
+            _characterColliderShape = GetComponent<CharacterColliderShape>();
+        }
 
-			SetNoFriction();
+        private void Start()
+        {
+            SetNoFriction();
+            _stepChecker.SetFeetOffset(_characterColliderShape.FeetOffsetMeters);
+        }
 
-			_stepChecker.SetFeetOffset(_originalColliderHeight / 2f);
-		}
+        private void Update()
+        {
+            UpdateEvents();
+        }
 
-		private void Update()
-		{
-			UpdateEvents();
-		}
+        #endregion
 
-		private void UpdateEvents()
-		{
-			if (_groundChecker.JustLanded)
-			{
-				if (_previousYVelocity < -_minimumVerticalSpeedToLightLandEvent)
-				{
-					_onLightLand.Invoke();
-				}
-			}
-			_previousYVelocity = _rigidbody.linearVelocity.y;
-		}
+        #region Public Methods
 
-		private void SetNoFriction()
-		{
-			_collider.material.dynamicFriction = 0f;
-			_collider.material.staticFriction = 0f;
+        public bool IsJumping()
+        {
+            return _rigidbody.linearVelocity.y > 1f;
+        }
 
-			_collider.material.frictionCombine = PhysicsMaterialCombine.Minimum;
-		}
+        public bool IsFalling()
+        {
+            return _rigidbody.linearVelocity.y < 0f && !_groundChecker.IsGrounded;
+        }
 
-		public bool IsJumping()
-		{
-			return _rigidbody.linearVelocity.y > 1f;
-		}
+        public bool IsRunning()
+        {
+            return _characterMove.HasMovementInput && !_characterCrouch.IsCrouching && _groundChecker.IsGrounded;
+        }
 
-		public bool IsFalling()
-		{
-			return _rigidbody.linearVelocity.y < 0f && !_groundChecker.IsGrounded;
-		}
+        public float GetOriginalColliderHeight()
+        {
+            return _characterColliderShape.OriginalHeightMeters;
+        }
 
-		public bool IsRunning()
-		{
-			return _characterMove.HasMovementInput && !_characterCrouch.IsCrouching && _groundChecker.IsGrounded;
-		}
+        #endregion
 
-		public float GetOriginalColliderHeight()
-		{
-			return _originalColliderHeight;
-		}
-	}
+        #region Private Methods
+
+        private void UpdateEvents()
+        {
+            if (_groundChecker.JustLanded)
+            {
+                if (_previousYVelocity < -_minimumVerticalSpeedToLightLandEvent)
+                {
+                    _onLightLand.Invoke();
+                }
+            }
+
+            _previousYVelocity = _rigidbody.linearVelocity.y;
+        }
+
+        private void SetNoFriction()
+        {
+            PhysicsMaterial colliderMaterial = _characterColliderShape.PhysicsCollider.material;
+            colliderMaterial.dynamicFriction = 0f;
+            colliderMaterial.staticFriction = 0f;
+            colliderMaterial.frictionCombine = PhysicsMaterialCombine.Minimum;
+        }
+
+        #endregion
+    }
 }

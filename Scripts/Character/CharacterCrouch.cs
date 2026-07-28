@@ -3,6 +3,11 @@ using UnityEngine;
 
 namespace PhysicsCharacterController
 {
+    /// <summary>
+    /// Applies crouch input by resizing the configured CharacterColliderShape and moving the
+    /// first-person head point. The collider abstraction preserves the character's feet position,
+    /// so crouching behaves consistently with capsule and box colliders.
+    /// </summary>
     public class CharacterCrouch : MonoBehaviour, IMovementModifier
     {
         [Header("Crouch Settings")]
@@ -31,8 +36,7 @@ namespace PhysicsCharacterController
         [SerializeField] private GroundChecker _groundChecker;
         [SerializeField] private BaseCharacterInput _input;
 
-        private CapsuleCollider _collider;
-        private float _originalColliderHeight;
+        private CharacterColliderShape _characterColliderShape;
         private bool _isCrouching;
         private bool _wantsToCrouch;
         private float _transitionProgress;
@@ -43,20 +47,21 @@ namespace PhysicsCharacterController
         public float CrouchHeightMultiplier => _crouchHeightMultiplier;
         public float CrouchSpeedMultiplier => _crouchSpeedMultiplier;
 
+        #region Unity Lifecycle
+
         private void Awake()
         {
-            _collider = GetComponent<CapsuleCollider>();
-            _originalColliderHeight = _collider.height;
+            _characterColliderShape = GetComponent<CharacterColliderShape>();
         }
 
         private void OnEnable()
         {
-            _input.OnCrouch += OnCrouchInput;
+            _input.OnCrouch += UpdateCrouchIntent;
         }
 
         private void OnDisable()
         {
-            _input.OnCrouch -= OnCrouchInput;
+            _input.OnCrouch -= UpdateCrouchIntent;
         }
 
         private void OnDestroy()
@@ -64,38 +69,23 @@ namespace PhysicsCharacterController
             _transitionTween?.Kill();
         }
 
-        private void OnCrouchInput(bool wantsToCrouch)
-        {
-            _wantsToCrouch = wantsToCrouch;
-        }
-
-        public bool ShouldStayCrouched()
-        {
-            bool shouldCrouchInput = _wantsToCrouch && _groundChecker.IsGrounded;
-            bool isBlockedAbove = _isCrouching && IsObstacleAbove();
-
-            return shouldCrouchInput || isBlockedAbove;
-        }
-
         private void OnDrawGizmosSelected()
         {
-            if (!_collider)
-            {
-                _collider = GetComponent<CapsuleCollider>();
-                _originalColliderHeight = _collider.height;
-            }
+            CharacterColliderShape characterColliderShape = GetComponent<CharacterColliderShape>();
+            characterColliderShape.RefreshColliderCache();
+            float currentTopOffsetMeters = characterColliderShape.CurrentTopOffsetMeters;
+            float standingTopOffsetMeters = Application.isPlaying
+                ? characterColliderShape.OriginalTopOffsetMeters
+                : currentTopOffsetMeters;
+            float clearanceDistanceMeters = standingTopOffsetMeters - currentTopOffsetMeters;
 
-            float currentTop = _collider.center.y + _collider.height * 0.5f;
-            float targetTop = _originalColliderHeight * 0.5f;
-            float distance = targetTop - currentTop;
-
-            if (distance <= 0)
+            if (clearanceDistanceMeters <= 0f)
             {
                 return;
             }
 
-            Vector3 origin = transform.position + Vector3.up * currentTop;
-            Vector3 end = origin + Vector3.up * distance;
+            Vector3 origin = transform.position + Vector3.up * currentTopOffsetMeters;
+            Vector3 end = origin + Vector3.up * clearanceDistanceMeters;
 
             Gizmos.color = Color.cyan;
             Gizmos.DrawWireSphere(origin, _obstacleCheckRadius);
@@ -106,19 +96,16 @@ namespace PhysicsCharacterController
             Gizmos.DrawWireSphere(end, _obstacleCheckRadius);
         }
 
-        private bool IsObstacleAbove()
+        #endregion
+
+        #region Public Methods
+
+        public bool ShouldStayCrouched()
         {
-            float currentTop = _collider.center.y + _collider.height * 0.5f;
-            float targetTop = _originalColliderHeight * 0.5f;
-            float distance = targetTop - currentTop;
+            bool shouldCrouchFromInput = _wantsToCrouch && _groundChecker.IsGrounded;
+            bool isBlockedAbove = _isCrouching && IsObstacleAbove();
 
-            if (distance <= 0)
-            {
-                return false;
-            }
-
-            Vector3 origin = transform.position + Vector3.up * currentTop;
-            return Physics.SphereCast(origin, _obstacleCheckRadius, Vector3.up, out _, distance, _obstacleMask, QueryTriggerInteraction.Ignore);
+            return shouldCrouchFromInput || isBlockedAbove;
         }
 
         public void ApplyCrouchState()
@@ -131,6 +118,42 @@ namespace PhysicsCharacterController
         {
             _isCrouching = false;
             TransitionTo(targetProgress: 0f);
+        }
+
+        public float GetSpeedMultiplier(Vector3 intendedDirection)
+        {
+            return _isCrouching ? _crouchSpeedMultiplier : 1f;
+        }
+
+        #endregion
+
+        #region Private Methods
+
+        private void UpdateCrouchIntent(bool wantsToCrouch)
+        {
+            _wantsToCrouch = wantsToCrouch;
+        }
+
+        private bool IsObstacleAbove()
+        {
+            float currentTopOffsetMeters = _characterColliderShape.CurrentTopOffsetMeters;
+            float standingTopOffsetMeters = _characterColliderShape.OriginalTopOffsetMeters;
+            float clearanceDistanceMeters = standingTopOffsetMeters - currentTopOffsetMeters;
+
+            if (clearanceDistanceMeters <= 0f)
+            {
+                return false;
+            }
+
+            Vector3 origin = transform.position + Vector3.up * currentTopOffsetMeters;
+            return Physics.SphereCast(
+                origin,
+                _obstacleCheckRadius,
+                Vector3.up,
+                out _,
+                clearanceDistanceMeters,
+                _obstacleMask,
+                QueryTriggerInteraction.Ignore);
         }
 
         private void TransitionTo(float targetProgress)
@@ -151,23 +174,19 @@ namespace PhysicsCharacterController
 
         private void ApplyTransitionProgress()
         {
-            float crouchedHeight = _originalColliderHeight * _crouchHeightMultiplier;
+            float crouchedHeightMeters = _characterColliderShape.OriginalHeightMeters * _crouchHeightMultiplier;
+            float heightMeters = Mathf.Lerp(
+                _characterColliderShape.OriginalHeightMeters,
+                crouchedHeightMeters,
+                _transitionProgress);
 
-            float height = Mathf.Lerp(_originalColliderHeight, crouchedHeight, _transitionProgress);
-            float centerY = Mathf.Lerp(0f, -crouchedHeight * _crouchHeightMultiplier, _transitionProgress);
-
-            _collider.height = height;
-            _collider.center = new Vector3(0f, centerY, 0f);
+            _characterColliderShape.SetHeightPreservingBottom(heightMeters);
 
             Vector3 headOffset = Vector3.Lerp(_povNormalHeadHeight, _povCrouchHeadHeight, _transitionProgress);
-            // Local space, not world: a world-space offset ignores character yaw, so re-applying it
-            // after a rotation teleports the head point and makes the tracking camera snap.
+            // Local space keeps the camera anchor attached when character yaw changes.
             _headPoint.localPosition = headOffset;
         }
 
-        public float GetSpeedMultiplier(Vector3 intendedDirection)
-        {
-            return _isCrouching ? _crouchSpeedMultiplier : 1f;
-        }
+        #endregion
     }
 }
