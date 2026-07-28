@@ -19,7 +19,7 @@ namespace PhysicsCharacterController
         public float OriginalHeightMeters { get; private set; }
         public float OriginalTopOffsetMeters => _originalBottomOffsetMeters + OriginalHeightMeters;
         public float CurrentTopOffsetMeters => Center.y + HeightMeters * 0.5f;
-        public float FeetOffsetMeters => -_originalBottomOffsetMeters;
+        public float FeetOffsetMeters => HeightMeters * 0.5f - Center.y;
 
         #region Unity Lifecycle
 

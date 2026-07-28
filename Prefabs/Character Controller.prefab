@@ -96,6 +96,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5754172689165299980}
   - component: {fileID: 1667933343544081482}
+  - component: {fileID: 1759215851550013945}
   - component: {fileID: 7698808979737546365}
   - component: {fileID: 2649054290867484457}
   - component: {fileID: 5381384936787526104}
@@ -157,6 +158,18 @@ CapsuleCollider:
   m_Height: 2
   m_Direction: 1
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &1759215851550013945
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4091744628385212224}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6974f6a56caf2444f9dfda8d65b42b9b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PhysicsCharacterController.CharacterCapsuleColliderShape
 --- !u!54 &7698808979737546365
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -219,8 +232,8 @@ MonoBehaviour:
   _groundMask:
     serializedVersion: 2
     m_Bits: 1
-  _checkRadius: 0.5
-  _feetOffset: 0.6
+  _checkRadiusMeters: 0.5
+  _groundToleranceMeters: 0.1
 --- !u!114 &3026518424203180078
 MonoBehaviour:
   m_ObjectHideFlags: 0
