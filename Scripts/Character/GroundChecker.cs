@@ -18,8 +18,7 @@ namespace PhysicsCharacterController
 
         [SerializeField] private LayerMask _groundMask;
         [SerializeField, Min(MIN_CHECK_RADIUS_METERS)] private float _checkRadiusMeters = 0.2f;
-        [SerializeField, Min(MIN_GROUND_TOLERANCE_METERS)]
-        private float _groundToleranceMeters = 0.1f;
+        [SerializeField, Min(MIN_GROUND_TOLERANCE_METERS)] private float _groundToleranceMeters = 0.1f;
 
         private readonly RaycastHit[] _groundHits = new RaycastHit[MAX_GROUND_HIT_COUNT];
         private CharacterColliderShape _characterColliderShape;

@@ -21,10 +21,7 @@ namespace PhysicsCharacterController
         [SerializeField] private float _maxVerticalOffsetMeters = 0.25f;
 
         [Header("Roughness Detection")]
-        [Tooltip("Ground normal rotation rate at which the surface counts as fully rough. Gradual slopes stay near zero; bumps and rocks spike far above")]
-        [SerializeField] private float _fullRoughnessNormalRateDegreesPerSecond = 60f;
-        [Tooltip("Time for smoothing to fade back out after the last detected bump, so it holds steady across a bumpy patch")]
-        [SerializeField] private float _roughnessReleaseSeconds = 0.4f;
+        [SerializeField] private GroundSurfaceRoughnessTracker _surfaceRoughnessTracker = new();
 
         [Header("Horizontal Smoothing")]
         [Tooltip("Keep tight: only filters collision rattle. Higher values make the mesh slide when the character stops")]
@@ -35,8 +32,6 @@ namespace PhysicsCharacterController
         private Vector3 _authoredLocalPosition;
         private Vector3 _smoothedWorldPosition;
         private Vector3 _smoothVelocity;
-        private Vector3 _previousGroundNormal;
-        private float _roughness01;
 
         #region Unity Lifecycle
 
@@ -49,8 +44,7 @@ namespace PhysicsCharacterController
         {
             _smoothedWorldPosition = GetTargetWorldPosition();
             _smoothVelocity = Vector3.zero;
-            _previousGroundNormal = Vector3.zero;
-            _roughness01 = 0f;
+            _surfaceRoughnessTracker.Reset();
         }
 
         private void LateUpdate()
@@ -68,14 +62,14 @@ namespace PhysicsCharacterController
             }
 
             bool isGrounded = _groundChecker.IsGrounded;
-            UpdateRoughness(isGrounded);
+            float roughness01 = _surfaceRoughnessTracker.Update(isGrounded, _groundChecker.GroundHit.normal, Time.fixedDeltaTime, Time.deltaTime);
 
             Vector3 targetWorldPosition = GetTargetWorldPosition();
 
             float verticalSmoothTimeSeconds = _verticalSmoothing.SelectSmoothTimeSeconds(isGrounded, Time.deltaTime);
             if (isGrounded)
             {
-                verticalSmoothTimeSeconds *= _roughness01;
+                verticalSmoothTimeSeconds *= roughness01;
             }
 
             float smoothedY = Mathf.SmoothDamp(_smoothedWorldPosition.y, targetWorldPosition.y, ref _smoothVelocity.y, verticalSmoothTimeSeconds);
@@ -98,31 +92,6 @@ namespace PhysicsCharacterController
                 targetWorldPosition.z + horizontalOffset.y);
 
             transform.position = _smoothedWorldPosition;
-        }
-
-        private void UpdateRoughness(bool isGrounded)
-        {
-            if (isGrounded)
-            {
-                Vector3 groundNormal = _groundChecker.GroundHit.normal;
-                bool hasNewNormalSample = _previousGroundNormal != Vector3.zero && groundNormal != _previousGroundNormal;
-
-                if (hasNewNormalSample)
-                {
-                    // Normal samples change only on physics ticks, so rate against fixed delta.
-                    float normalRateDegreesPerSecond = Vector3.Angle(_previousGroundNormal, groundNormal) / Time.fixedDeltaTime;
-                    float roughnessImpulse01 = Mathf.Clamp01(normalRateDegreesPerSecond / _fullRoughnessNormalRateDegreesPerSecond);
-                    _roughness01 = Mathf.Max(_roughness01, roughnessImpulse01);
-                }
-
-                _previousGroundNormal = groundNormal;
-            }
-            else
-            {
-                _previousGroundNormal = Vector3.zero;
-            }
-
-            _roughness01 = Mathf.MoveTowards(_roughness01, 0f, Time.deltaTime / _roughnessReleaseSeconds);
         }
 
         private Vector3 GetTargetWorldPosition()

@@ -2,40 +2,30 @@
 using Unity.Cinemachine;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.Serialization;
 
 namespace PhysicsCharacterController
 {
     public class CameraManager : MonoBehaviour
     {
         [Header("Camera References")]
-        [FormerlySerializedAs("firstPersonCamera")]
         [SerializeField] private CinemachineCamera _firstPersonCamera;
-        [FormerlySerializedAs("thirdPersonCamera")]
         [SerializeField] private CinemachineCamera _thirdPersonCamera;
-        [FormerlySerializedAs("mainCamera")]
         [SerializeField] private Camera _mainCamera;
         [SerializeField] private CharacterRotation _characterRotation;
 
         [Header("First Person Settings")]
-        [FormerlySerializedAs("firstPersonMask")]
         [SerializeField] private LayerMask _firstPersonMask;
-        [FormerlySerializedAs("firstPersonMaskChangeDelay")]
         [SerializeField] private float _firstPersonMaskChangeDelaySeconds = 0.1f;
-        [FormerlySerializedAs("firstPersonHeightOnTransition")]
         [SerializeField] private float _firstPersonHeightOnTransition;
 
         [Header("Third Person Settings")]
-        [FormerlySerializedAs("thirdPersonMask")]
         [SerializeField] private LayerMask _thirdPersonMask;
-        [FormerlySerializedAs("thirdPersonMaskChangeDelay")]
         [SerializeField] private float _thirdPersonMaskChangeDelaySeconds = 0.1f;
-        [FormerlySerializedAs("thirdPersonHeightOnTransition")]
         [SerializeField] private float _thirdPersonHeightOnTransition = 0.5f;
 
         [Header("State")]
-        [FormerlySerializedAs("activeThirdPerson")]
         [SerializeField] private bool _isThirdPersonActive = true;
+        [SerializeField] private Key _toggleKey = Key.F2;
 
         private FirstPersonCameraController _firstPersonCameraController;
         private CinemachinePanTilt _firstPersonPanTilt;
@@ -66,7 +56,7 @@ namespace PhysicsCharacterController
 
         private void HandleCameraToggleInput()
         {
-            if (Keyboard.current.mKey.wasPressedThisFrame)
+            if (Keyboard.current[_toggleKey].wasPressedThisFrame)
             {
                 ToggleCameraMode();
             }

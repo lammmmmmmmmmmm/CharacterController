@@ -1,0 +1,21 @@
+{
+    "name": "PhysicsCharacterController.Runtime",
+    "rootNamespace": "PhysicsCharacterController",
+    "references": [
+        "AstarPathfindingProject",
+        "Drawing",
+        "Kybernetik.Animancer",
+        "PackageTools",
+        "Unity.Cinemachine",
+        "Unity.InputSystem"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

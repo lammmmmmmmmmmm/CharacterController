@@ -4,9 +4,9 @@ using UnityEngine;
 namespace PhysicsCharacterController
 {
     /// <summary>
-    /// Applies crouch input by resizing the configured CharacterColliderShape and moving the
-    /// first-person head point. The collider abstraction preserves the character's feet position,
-    /// so crouching behaves consistently with capsule and box colliders.
+    /// Applies crouch input by resizing the configured CharacterColliderShape. The collider
+    /// abstraction preserves the character's feet position, and camera anchors derive their height
+    /// from that collider so crouch transitions have one authoritative source.
     /// </summary>
     public class CharacterCrouch : MonoBehaviour, IMovementModifier
     {
@@ -18,12 +18,6 @@ namespace PhysicsCharacterController
         [Tooltip("Duration of the crouch/stand transition in seconds")]
         [SerializeField] private float _transitionDurationSeconds = 0.2f;
 
-        [Header("Head Position")]
-        [Tooltip("FP camera head height")]
-        [SerializeField] private Vector3 _povNormalHeadHeight = new(0f, 0.5f, -0.1f);
-        [Tooltip("FP camera head height when crouching")]
-        [SerializeField] private Vector3 _povCrouchHeadHeight = new(0f, -0.1f, -0.1f);
-
         [Header("Obstacle Detection")]
         [Tooltip("Mask for obstacles above the character")]
         [SerializeField] private LayerMask _obstacleMask;
@@ -31,8 +25,6 @@ namespace PhysicsCharacterController
         [SerializeField] private float _obstacleCheckRadius = 0.2f;
 
         [Header("References")]
-        [Tooltip("Head reference")]
-        [SerializeField] private Transform _headPoint;
         [SerializeField] private GroundChecker _groundChecker;
         [SerializeField] private BaseCharacterInput _input;
 
@@ -74,9 +66,7 @@ namespace PhysicsCharacterController
             CharacterColliderShape characterColliderShape = GetComponent<CharacterColliderShape>();
             characterColliderShape.RefreshColliderCache();
             float currentTopOffsetMeters = characterColliderShape.CurrentTopOffsetMeters;
-            float standingTopOffsetMeters = Application.isPlaying
-                ? characterColliderShape.OriginalTopOffsetMeters
-                : currentTopOffsetMeters;
+            float standingTopOffsetMeters = Application.isPlaying ? characterColliderShape.OriginalTopOffsetMeters : currentTopOffsetMeters;
             float clearanceDistanceMeters = standingTopOffsetMeters - currentTopOffsetMeters;
 
             if (clearanceDistanceMeters <= 0f)
@@ -175,16 +165,9 @@ namespace PhysicsCharacterController
         private void ApplyTransitionProgress()
         {
             float crouchedHeightMeters = _characterColliderShape.OriginalHeightMeters * _crouchHeightMultiplier;
-            float heightMeters = Mathf.Lerp(
-                _characterColliderShape.OriginalHeightMeters,
-                crouchedHeightMeters,
-                _transitionProgress);
+            float heightMeters = Mathf.Lerp(_characterColliderShape.OriginalHeightMeters, crouchedHeightMeters, _transitionProgress);
 
             _characterColliderShape.SetHeightPreservingBottom(heightMeters);
-
-            Vector3 headOffset = Vector3.Lerp(_povNormalHeadHeight, _povCrouchHeadHeight, _transitionProgress);
-            // Local space keeps the camera anchor attached when character yaw changes.
-            _headPoint.localPosition = headOffset;
         }
 
         #endregion

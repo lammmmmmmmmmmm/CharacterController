@@ -54,8 +54,7 @@ namespace PhysicsCharacterController
 
         private void SpawnAtCharacterFeet(GameObject particlePrefab)
         {
-            Vector3 feetPosition = characterManager.transform.position
-                - Vector3.up * _characterColliderShape.FeetOffsetMeters;
+            Vector3 feetPosition = characterManager.transform.position - Vector3.up * _characterColliderShape.FeetOffsetMeters;
             GameObject particle = Instantiate(particlePrefab, feetPosition, Quaternion.identity);
             particle.transform.parent = transform;
         }
