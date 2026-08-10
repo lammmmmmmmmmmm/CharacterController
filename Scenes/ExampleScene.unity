@@ -3158,7 +3158,6 @@ MonoBehaviour:
   showNavGraphs: 1
   showUnwalkableNodes: 1
   debugMode: 0
-  graphUpdateDebugMode: 0
   debugFloor: 0
   debugRoof: 1
   manualDebugFloorRoof: 0
@@ -3193,7 +3192,6 @@ MonoBehaviour:
     pivotPointRoot: {fileID: 0}
     spreadOutCount: 1
   showGraphs: 1
-  showGraphsInStandalonePlayer: 0
 --- !u!4 &785032243
 Transform:
   m_ObjectHideFlags: 0
@@ -4693,40 +4691,7 @@ MonoBehaviour:
       m_Bits: 4294967295
     useGraphRaycasting: 0
   traversableTags: -1
-  tagCostMultipliers:
-  - 1
-  - 1
-  - 1
-  - 1
-  - 1
-  - 1
-  - 1
-  - 1
-  - 1
-  - 1
-  - 1
-  - 1
-  - 1
-  - 1
-  - 1
-  - 1
-  - 1
-  - 1
-  - 1
-  - 1
-  - 1
-  - 1
-  - 1
-  - 1
-  - 1
-  - 1
-  - 1
-  - 1
-  - 1
-  - 1
-  - 1
-  - 1
-  tagEntryCosts: 0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+  tagPenalties: 0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
   graphMask:
     value: -1
 --- !u!114 &1042393910
@@ -7598,6 +7563,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1713886684}
   - component: {fileID: 1713886683}
+  - component: {fileID: 1713886685}
   m_Layer: 0
   m_Name: Directional Light
   m_TagString: Untagged
@@ -7685,6 +7651,35 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 50, y: -30, z: 0}
+--- !u!114 &1713886685
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1713886682}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 474bcb49853aa07438625e644c072ee6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.UniversalAdditionalLightData
+  m_UsePipelineSettings: 1
+  m_AdditionalLightsShadowResolutionTier: 2
+  m_CustomShadowLayers: 0
+  m_LightCookieSize: {x: 1, y: 1}
+  m_LightCookieOffset: {x: 0, y: 0}
+  m_SoftShadowQuality: 0
+  m_RenderingLayersMask:
+    serializedVersion: 0
+    m_Bits: 1
+  m_ShadowRenderingLayersMask:
+    serializedVersion: 0
+    m_Bits: 1
+  m_Version: 4
+  m_LightLayerMask: 1
+  m_ShadowLayerMask: 1
+  m_RenderingLayers: 1
+  m_ShadowRenderingLayers: 1
 --- !u!1001 &1727573350
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -9427,6 +9422,17 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 5cdaa96e37133e94ba786e2b6e565444, type: 3}
+--- !u!114 &2544003022429517301 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 972761423078378084, guid: 5cdaa96e37133e94ba786e2b6e565444, type: 3}
+  m_PrefabInstance: {fileID: 2544003022429517300}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 97f6a31e6eae992469724dfe233ba31c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: PhysicsCharacterController.Runtime::PhysicsCharacterController.TouchJoystickInput
 --- !u!1001 &2670180654197726845
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -9981,6 +9987,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 2315718212141345392, guid: c47a17ba764f3ef4db5fff99e93df6c6, type: 3}
+      propertyPath: _touchLookInput
+      value: 
+      objectReference: {fileID: 8426860329496925151}
     - target: {fileID: 3045032713461965366, guid: c47a17ba764f3ef4db5fff99e93df6c6, type: 3}
       propertyPath: m_LocalPosition.x
       value: -0.1745243
@@ -10013,6 +10023,10 @@ PrefabInstance:
       propertyPath: _groundMask.m_Bits
       value: 8
       objectReference: {fileID: 0}
+    - target: {fileID: 5251998789446294007, guid: c47a17ba764f3ef4db5fff99e93df6c6, type: 3}
+      propertyPath: _touchLookInput
+      value: 
+      objectReference: {fileID: 8426860329496925151}
     - target: {fileID: 6010666514102873651, guid: c47a17ba764f3ef4db5fff99e93df6c6, type: 3}
       propertyPath: _drawGroundPathDebug
       value: 1
@@ -10085,6 +10099,10 @@ PrefabInstance:
       propertyPath: managedReferences[408203170567160102].Composition.Bottom.HardLimits.Size.y
       value: 2
       objectReference: {fileID: 0}
+    - target: {fileID: 7690257895551999882, guid: c47a17ba764f3ef4db5fff99e93df6c6, type: 3}
+      propertyPath: _touchJoystickInput
+      value: 
+      objectReference: {fileID: 2544003022429517301}
     m_RemovedComponents: []
     m_RemovedGameObjects:
     - {fileID: 107957789511384848, guid: c47a17ba764f3ef4db5fff99e93df6c6, type: 3}
@@ -10664,14 +10682,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 8426860329496925150}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 66bee7bffd515b749bdcde3a4b6a084c, type: 3}
+  m_Script: {fileID: 11500000, guid: f630fab0f0d8a17408351112875e73ab, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::OnScreenLook
-  sensitivity: 1
-  invertX: 0
-  invertY: 0
-  blockWhenPointerStartsOverUI: 1
-  _controlPath: <Mouse>/delta
+  m_EditorClassIdentifier: PhysicsCharacterController.Runtime::PhysicsCharacterController.TouchLookInput
+  _blocksWhenPointerStartsOverUi: 1
 --- !u!1001 &8441604886575740448
 PrefabInstance:
   m_ObjectHideFlags: 0

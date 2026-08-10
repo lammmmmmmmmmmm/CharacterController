@@ -3,6 +3,11 @@ using UnityEngine.InputSystem;
 
 namespace PhysicsCharacterController
 {
+	/// <summary>
+	/// Provides player movement and action input to the character systems. Desktop movement comes
+	/// from the configured Input Action, while mobile movement reads the touch joystick directly so
+	/// no virtual gamepad control is required.
+	/// </summary>
 	public class PlayerCharacterInput : BaseCharacterInput
 	{
 		[Header("Inputs")]
@@ -11,6 +16,7 @@ namespace PhysicsCharacterController
 		[SerializeField] private InputActionReference _jumpAction;
 		[SerializeField] private InputActionReference _sprintAction;
 		[SerializeField] private InputActionReference _crouchAction;
+		[SerializeField] private TouchJoystickInput _touchJoystickInput;
 
 		[SerializeField] private bool _enableJump = true;
 		[SerializeField] private bool _enableCrouch = true;
@@ -18,85 +24,141 @@ namespace PhysicsCharacterController
 
 		private float _targetAngle;
 
+		#region Unity Lifecycle
+
 		private void OnEnable()
 		{
-			_moveAction.action.performed += OnMoveActionPerformed;
-			_moveAction.action.canceled += OnMoveActionCanceled;
+			SubscribeToMovementInput();
 
-			_jumpAction.action.started += OnJumpAction;
+			_jumpAction.action.started += JumpWhenRequested;
 
-			_sprintAction.action.started += OnSprintActionStarted;
-			_sprintAction.action.canceled += OnSprintActionEnded;
+			_sprintAction.action.started += StartSprintingWhenRequested;
+			_sprintAction.action.canceled += StopSprintingWhenRequested;
 
-			_crouchAction.action.started += OnCrouchAction;
-			_crouchAction.action.canceled += OnCrouchActionEnded;
+			_crouchAction.action.started += StartCrouchingWhenRequested;
+			_crouchAction.action.canceled += StopCrouchingWhenRequested;
 		}
 
 		private void OnDisable()
 		{
-			_moveAction.action.performed -= OnMoveActionPerformed;
-			_moveAction.action.canceled -= OnMoveActionCanceled;
+			UnsubscribeFromMovementInput();
 
-			_jumpAction.action.started -= OnJumpAction;
+			_jumpAction.action.started -= JumpWhenRequested;
 
-			_sprintAction.action.started -= OnSprintActionStarted;
-			_sprintAction.action.canceled -= OnSprintActionEnded;
+			_sprintAction.action.started -= StartSprintingWhenRequested;
+			_sprintAction.action.canceled -= StopSprintingWhenRequested;
 
-			_crouchAction.action.started -= OnCrouchAction;
-			_crouchAction.action.canceled -= OnCrouchActionEnded;
+			_crouchAction.action.started -= StartCrouchingWhenRequested;
+			_crouchAction.action.canceled -= StopCrouchingWhenRequested;
 		}
+
+		#endregion
+
+		#region Public Methods
 
 		public override Vector2 GetMoveInput()
 		{
-			return _moveAction.action.ReadValue<Vector2>();
+			return UnityEngine.Device.Application.isMobilePlatform
+				? _touchJoystickInput.InputValue
+				: _moveAction.action.ReadValue<Vector2>();
 		}
 
 		public override float GetMoveAngle()
 		{
 			Vector2 axisInput = GetMoveInput();
 
-			// IMPORTANT: If there is no input, return the last target angle
-			if (axisInput == Vector2.zero) return _targetAngle;
+			if (axisInput == Vector2.zero)
+			{
+				return _targetAngle;
+			}
 
 			_targetAngle = Mathf.Atan2(axisInput.x, axisInput.y) * Mathf.Rad2Deg + _characterCamera.transform.eulerAngles.y;
 			return _targetAngle;
 		}
 
-		#region Actions
-		private void OnMoveActionPerformed(InputAction.CallbackContext ctx)
+		#endregion
+
+		#region Private Methods
+
+		private void SubscribeToMovementInput()
 		{
-			InvokeMoveStart(ctx.ReadValue<Vector2>());
+			if (UnityEngine.Device.Application.isMobilePlatform)
+			{
+				_touchJoystickInput.OnInputChanged += PublishTouchMovementChange;
+				return;
+			}
+
+			_moveAction.action.performed += PublishMovementFromAction;
+			_moveAction.action.canceled += StopMovementFromAction;
 		}
 
-		private void OnMoveActionCanceled(InputAction.CallbackContext ctx)
+		private void UnsubscribeFromMovementInput()
+		{
+			if (UnityEngine.Device.Application.isMobilePlatform)
+			{
+				_touchJoystickInput.OnInputChanged -= PublishTouchMovementChange;
+				return;
+			}
+
+			_moveAction.action.performed -= PublishMovementFromAction;
+			_moveAction.action.canceled -= StopMovementFromAction;
+		}
+
+		private void PublishTouchMovementChange(Vector2 movementInput)
+		{
+			if (movementInput == Vector2.zero)
+			{
+				InvokeMoveStop();
+				return;
+			}
+
+			InvokeMoveStart(movementInput);
+		}
+
+		private void PublishMovementFromAction(InputAction.CallbackContext context)
+		{
+			InvokeMoveStart(context.ReadValue<Vector2>());
+		}
+
+		private void StopMovementFromAction(InputAction.CallbackContext context)
 		{
 			InvokeMoveStop();
 		}
 
-		private void OnJumpAction(InputAction.CallbackContext ctx)
+		private void JumpWhenRequested(InputAction.CallbackContext context)
 		{
-			if (_enableJump) InvokeJumpPressed();
+			if (_enableJump)
+			{
+				InvokeJumpPressed();
+			}
 		}
 
-		private void OnSprintActionStarted(InputAction.CallbackContext ctx)
+		private void StartSprintingWhenRequested(InputAction.CallbackContext context)
 		{
-			if (_enableSprint) InvokeSprint(true);
+			if (_enableSprint)
+			{
+				InvokeSprint(true);
+			}
 		}
 
-		private void OnSprintActionEnded(InputAction.CallbackContext ctx)
+		private void StopSprintingWhenRequested(InputAction.CallbackContext context)
 		{
 			InvokeSprint(false);
 		}
 
-		private void OnCrouchAction(InputAction.CallbackContext ctx)
+		private void StartCrouchingWhenRequested(InputAction.CallbackContext context)
 		{
-			if (_enableCrouch) InvokeCrouch(true);
+			if (_enableCrouch)
+			{
+				InvokeCrouch(true);
+			}
 		}
 
-		private void OnCrouchActionEnded(InputAction.CallbackContext ctx)
+		private void StopCrouchingWhenRequested(InputAction.CallbackContext context)
 		{
 			InvokeCrouch(false);
 		}
+
 		#endregion
 	}
 }

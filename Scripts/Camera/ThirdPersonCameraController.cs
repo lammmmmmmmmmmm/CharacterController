@@ -13,6 +13,7 @@ namespace PhysicsCharacterController
 	{
 		[SerializeField] private InputActionReference _cameraActionReference;
 		[SerializeField] private LockCursor _lockCursor;
+		[SerializeField] private TouchLookInput _touchLookInput;
 
 		[Header("Camera controls")]
 		[SerializeField] private Vector2 _mouseSensitivity = new(5f, 1f);
@@ -37,7 +38,7 @@ namespace PhysicsCharacterController
 				return;
 			}
 
-			_input += _cameraActionReference.action.ReadValue<Vector2>() * _mouseSensitivity * new Vector2(0.01f, 0.001f);
+			_input += ReadCameraInput() * _mouseSensitivity * new Vector2(0.01f, 0.001f);
 
 			if (_input.y > 1f) _input.y = 1f;
 			else if (_input.y < 0f) _input.y = 0f;
@@ -54,6 +55,13 @@ namespace PhysicsCharacterController
 
 			_orbitalFollow.HorizontalAxis.Value = valueX;
 			_orbitalFollow.VerticalAxis.Value = valueY;
+		}
+
+		private Vector2 ReadCameraInput()
+		{
+			return UnityEngine.Device.Application.isMobilePlatform
+				? _touchLookInput.LookDeltaPixels
+				: _cameraActionReference.action.ReadValue<Vector2>();
 		}
 	}
 }
