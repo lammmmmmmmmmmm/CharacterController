@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Animancer;
 using UnityEngine;
 
@@ -5,10 +6,13 @@ namespace PhysicsCharacterController
 {
     public class CharacterAnimator : MonoBehaviour
     {
+        private const int BASE_LAYER_INDEX = 0;
+
         [SerializeField] private AnimancerComponent _animancer;
         [SerializeField] private TransitionLibrary _transitions;
+        [SerializeField] private AnimationChannelSO[] _animationChannelSOs;
 
-        private AnimancerLayer BaseLayer => _animancer.Layers[0];
+        private readonly Dictionary<AnimationChannelSO, AnimationLayerChannel> _animationChannels = new();
         private LinearMixerTransition _activeTransitionMixer;
 
         private AnimancerState _activeTransitionState;
@@ -20,7 +24,16 @@ namespace PhysicsCharacterController
 
         private bool _isTransitionPlayingOnBaseLayer;
 
+        private AnimancerLayer BaseLayer => _animancer.Layers[BASE_LAYER_INDEX];
+
         public StateId CurrentTag { get; private set; }
+
+        #region Unity Lifecycle
+
+        private void Awake()
+        {
+            InitializeAnimationChannels();
+        }
 
         private void OnEnable()
         {
@@ -35,6 +48,7 @@ namespace PhysicsCharacterController
         private void OnDisable()
         {
             CancelPendingTransitionPlayback();
+            ResetAnimationChannels();
             _currentBaseState = null;
             CurrentTag = null;
         }
@@ -43,6 +57,10 @@ namespace PhysicsCharacterController
         {
             CancelPendingTransitionPlayback();
         }
+
+        #endregion
+
+        #region Public Methods
 
         public void SetBase(LinearMixerTransition mixer, StateId tag, float sourceSpeed)
         {
@@ -89,6 +107,103 @@ namespace PhysicsCharacterController
         public void UpdateLocomotionAnimationParameters(LinearMixerTransition locomotionMixer, float sourceSpeed)
         {
             TrySetMixerParameter(locomotionMixer, sourceSpeed);
+        }
+
+        public bool Play(
+            AnimationChannelSO animationChannelSO,
+            object animationOwner,
+            int animationPriority,
+            AnimationClip animationClip,
+            float fadeDurationSeconds)
+        {
+            if (animationOwner == null || animationClip == null || fadeDurationSeconds < 0f)
+            {
+                Debug.LogError(
+                    $"Cannot play animation on '{name}'. Owner and clip are required, and fade duration cannot be negative.",
+                    this);
+                return false;
+            }
+
+            if (!TryGetAnimationChannel(animationChannelSO, out AnimationLayerChannel animationChannel))
+            {
+                return false;
+            }
+
+            return animationChannel.Play(animationOwner, animationPriority, animationClip, fadeDurationSeconds);
+        }
+
+        public bool Stop(AnimationChannelSO animationChannelSO, object animationOwner, float fadeDurationSeconds)
+        {
+            if (animationOwner == null || fadeDurationSeconds < 0f)
+            {
+                Debug.LogError(
+                    $"Cannot stop an animation channel on '{name}'. Owner is required, and fade duration cannot be negative.",
+                    this);
+                return false;
+            }
+
+            if (!TryGetAnimationChannel(animationChannelSO, out AnimationLayerChannel animationChannel))
+            {
+                return false;
+            }
+
+            return animationChannel.Stop(animationOwner, fadeDurationSeconds);
+        }
+
+        #endregion
+
+        #region Private Methods
+
+        private void InitializeAnimationChannels()
+        {
+            _animationChannels.Clear();
+            var configuredLayerIndices = new HashSet<int>();
+
+            foreach (AnimationChannelSO animationChannelSO in _animationChannelSOs)
+            {
+                if (animationChannelSO.LayerIndex <= BASE_LAYER_INDEX)
+                {
+                    Debug.LogError(
+                        $"Animation channel '{animationChannelSO.name}' targets reserved base layer {BASE_LAYER_INDEX}. Overlay channels must use a higher layer index.",
+                        this);
+                    continue;
+                }
+
+                if (_animationChannels.ContainsKey(animationChannelSO))
+                {
+                    Debug.LogError($"Animation channel '{animationChannelSO.name}' is configured more than once.", this);
+                    continue;
+                }
+
+                if (!configuredLayerIndices.Add(animationChannelSO.LayerIndex))
+                {
+                    Debug.LogError(
+                        $"Animation channel '{animationChannelSO.name}' reuses Animancer layer {animationChannelSO.LayerIndex}. Layer indices must be unique.",
+                        this);
+                    continue;
+                }
+
+                AnimancerLayer layer = _animancer.Layers[animationChannelSO.LayerIndex];
+                _animationChannels.Add(animationChannelSO, new AnimationLayerChannel(animationChannelSO, layer));
+            }
+        }
+
+        private bool TryGetAnimationChannel(AnimationChannelSO animationChannelSO, out AnimationLayerChannel animationChannel)
+        {
+            if (animationChannelSO == null)
+            {
+                Debug.LogError($"Cannot control an animation channel on '{name}' because no channel was provided.", this);
+                animationChannel = null;
+                return false;
+            }
+
+            if (_animationChannels.TryGetValue(animationChannelSO, out animationChannel))
+            {
+                return true;
+            }
+
+            Debug.LogError($"Animation channel '{animationChannelSO.name}' is not configured on '{name}'.", this);
+            return false;
         }
 
         private bool TryGetTransitionSelection(StateId newTag, float sourceSpeed, out TransitionLibrary.TransitionSelection selection)
@@ -222,6 +337,14 @@ namespace PhysicsCharacterController
             ClearQueuedBaseAnimation();
         }
 
+        private void ResetAnimationChannels()
+        {
+            foreach (AnimationLayerChannel animationChannel in _animationChannels.Values)
+            {
+                animationChannel.Reset();
+            }
+        }
+
         private static bool TrySetMixerParameter(LinearMixerTransition mixer, float sourceSpeed)
         {
             if (mixer == null)
@@ -244,5 +367,7 @@ namespace PhysicsCharacterController
         {
             return state != null && state.IsValid();
         }
+
+        #endregion
     }
 }
