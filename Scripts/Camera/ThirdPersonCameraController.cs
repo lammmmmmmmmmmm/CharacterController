@@ -13,7 +13,7 @@ namespace PhysicsCharacterController
 	{
 		[SerializeField] private InputActionReference _cameraActionReference;
 		[SerializeField] private LockCursor _lockCursor;
-		[SerializeField] private TouchLookInput _touchLookInput;
+		[SerializeField] private CameraLookInputSource _cameraLookInputSource;
 
 		[Header("Camera controls")]
 		[SerializeField] private Vector2 _mouseSensitivity = new(5f, 1f);
@@ -60,7 +60,7 @@ namespace PhysicsCharacterController
 		private Vector2 ReadCameraInput()
 		{
 			return UnityEngine.Device.Application.isMobilePlatform
-				? _touchLookInput.LookDeltaPixels
+				? _cameraLookInputSource.ReadMobileLookDeltaPixels()
 				: _cameraActionReference.action.ReadValue<Vector2>();
 		}
 	}

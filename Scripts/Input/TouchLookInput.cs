@@ -17,7 +17,7 @@ namespace PhysicsCharacterController
     [DisallowMultipleComponent]
     [RequireComponent(typeof(RectTransform))]
     [AddComponentMenu("UI/Touch Look Input")]
-    public sealed class TouchLookInput : MonoBehaviour
+    public sealed class TouchLookInput : MonoBehaviour, ICameraLookInputSource
     {
         private const int NO_TOUCH_ID = -1;
 
@@ -31,6 +31,7 @@ namespace PhysicsCharacterController
 
         public bool IsDragging { get; private set; }
         public Vector2 LookDeltaPixels { get; private set; }
+        public bool IsLookActive => IsDragging;
 
         #region Unity Lifecycle
 
@@ -62,6 +63,15 @@ namespace PhysicsCharacterController
         private void OnDisable()
         {
             ResetTouchState();
+        }
+
+        #endregion
+
+        #region Public Methods
+
+        public Vector2 ReadLookDeltaPixels()
+        {
+            return LookDeltaPixels;
         }
 
         #endregion

@@ -3,12 +3,9 @@ using UnityEngine;
 namespace PhysicsCharacterController
 {
     /// <summary>
-    /// Rotates the character toward the movement direction, or locks it to the camera yaw in
-    /// first person. Rotates through the Rigidbody, never the Transform: writing the transform of
-    /// a simulated rigidbody every physics tick forces a sync that breaks position interpolation,
-    /// which downstream consumers (camera target, mesh smoother) rely on for per-frame sampling.
+    /// Samples Unity character inputs and applies yaw solved by a testable policy object through the Rigidbody.
     /// </summary>
-    public class CharacterRotation : MonoBehaviour
+    public sealed class CharacterRotation : MonoBehaviour
     {
         [Header("References")]
         [SerializeField] private BaseCharacterInput _input;
@@ -16,12 +13,14 @@ namespace PhysicsCharacterController
         [SerializeField] private GameObject _characterParent;
 
         [Header("Settings")]
-        [Tooltip("Character rotation speed when the forward direction is changed")]
-        [SerializeField] private float _rotationSmooth = 0.1f;
+        [SerializeField] private float _rotationSmoothingDurationSeconds = 0.1f;
 
+        private readonly CharacterYawSolver _yawSolver = new();
         private Rigidbody _characterRigidbody;
-        private float _turnSmoothVelocity;
         private bool _isLockedToCamera;
+        private bool _isCameraFacingOverrideEnabled;
+
+        #region Unity Lifecycle
 
         private void Awake()
         {
@@ -30,38 +29,42 @@ namespace PhysicsCharacterController
 
         private void FixedUpdate()
         {
-            if (_isLockedToCamera)
-            {
-                RotateToCamera();
-            }
-            else
-            {
-                RotateToMovementDirection();
-            }
+            RotateCharacter();
         }
 
-        private void RotateToMovementDirection()
+        #endregion
+
+        #region Public Methods
+
+        public void SetLockedToCamera(bool isLockedToCamera)
         {
-            float targetAngle = _input.GetMoveAngle();
-            float smoothedAngle = Mathf.SmoothDampAngle(
+            _isLockedToCamera = isLockedToCamera;
+        }
+
+        public void SetCameraFacingOverride(bool isEnabled)
+        {
+            _isCameraFacingOverrideEnabled = isEnabled;
+        }
+
+        #endregion
+
+        #region Private Methods
+
+        private void RotateCharacter()
+        {
+            float targetYawDegrees = _yawSolver.ResolveTargetYawDegrees(
+                _input.GetMoveAngle(),
+                _characterCamera.transform.rotation.eulerAngles.y,
+                _isLockedToCamera,
+                _isCameraFacingOverrideEnabled);
+            float smoothedYawDegrees = _yawSolver.SmoothYawDegrees(
                 _characterRigidbody.rotation.eulerAngles.y,
-                targetAngle,
-                ref _turnSmoothVelocity,
-                _rotationSmooth);
-
-            _characterRigidbody.MoveRotation(Quaternion.Euler(0f, smoothedAngle, 0f));
+                targetYawDegrees,
+                _rotationSmoothingDurationSeconds,
+                Time.fixedDeltaTime);
+            _characterRigidbody.MoveRotation(Quaternion.Euler(0f, smoothedYawDegrees, 0f));
         }
 
-        private void RotateToCamera()
-        {
-            float cameraYRotation = _characterCamera.transform.rotation.eulerAngles.y;
-            _characterRigidbody.MoveRotation(Quaternion.Euler(0f, cameraYRotation, 0f));
-        }
-
-        // Used for First Person characters
-        public void SetLockedToCamera(bool isLocked)
-        {
-            _isLockedToCamera = isLocked;
-        }
+        #endregion
     }
 }
