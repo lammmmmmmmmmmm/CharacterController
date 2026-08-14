@@ -51,11 +51,13 @@ namespace PhysicsCharacterController
         private void OnEnable()
         {
             _input.OnJumpPressed += HandleJumpInput;
+            _input.OnNormalActionsAvailabilityChanged += CancelPendingJumpWhenActionsBecomeUnavailable;
         }
 
         private void OnDisable()
         {
             _input.OnJumpPressed -= HandleJumpInput;
+            _input.OnNormalActionsAvailabilityChanged -= CancelPendingJumpWhenActionsBecomeUnavailable;
         }
 
         private void HandleJumpInput()
@@ -69,6 +71,19 @@ namespace PhysicsCharacterController
                 _hasJumpBuffered = true;
                 _jumpBufferTimer = 0f;
             }
+        }
+
+        private void CancelPendingJumpWhenActionsBecomeUnavailable(bool areNormalActionsEnabled)
+        {
+            if (areNormalActionsEnabled)
+            {
+                return;
+            }
+
+            _hasJumpRequested = false;
+            _hasCoyoteTime = false;
+            _coyoteTimeCounter = 0f;
+            ResetJumpBuffer();
         }
 
         public bool TryExecuteJump()

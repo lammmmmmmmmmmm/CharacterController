@@ -21,6 +21,11 @@ namespace PhysicsCharacterController
 
         public override float GetMoveAngle()
         {
+            if (!AreNormalActionsEnabled)
+            {
+                return transform.eulerAngles.y;
+            }
+
             Vector3 directionToTarget = (_currentTarget - transform.position).normalized;
             float angle = Mathf.Atan2(directionToTarget.x, directionToTarget.z) * Mathf.Rad2Deg;
 
@@ -29,6 +34,11 @@ namespace PhysicsCharacterController
 
         public override Vector2 GetMoveInput()
         {
+            if (!AreNormalActionsEnabled)
+            {
+                return Vector2.zero;
+            }
+
             return _reachedEndOfPath ? Vector2.zero : Vector2.one;
         }
 

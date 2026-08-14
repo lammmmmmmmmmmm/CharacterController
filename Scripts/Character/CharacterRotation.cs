@@ -52,6 +52,11 @@ namespace PhysicsCharacterController
 
         private void RotateCharacter()
         {
+            if (!_input.AreNormalActionsEnabled)
+            {
+                return;
+            }
+
             float targetYawDegrees = _yawSolver.ResolveTargetYawDegrees(
                 _input.GetMoveAngle(),
                 _characterCamera.transform.rotation.eulerAngles.y,

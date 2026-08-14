@@ -58,6 +58,11 @@ namespace PhysicsCharacterController
 
 		public override Vector2 GetMoveInput()
 		{
+			if (!AreNormalActionsEnabled)
+			{
+				return Vector2.zero;
+			}
+
 			return UnityEngine.Device.Application.isMobilePlatform
 				? _touchJoystickInput.InputValue
 				: _moveAction.action.ReadValue<Vector2>();
@@ -65,6 +70,11 @@ namespace PhysicsCharacterController
 
 		public override float GetMoveAngle()
 		{
+			if (!AreNormalActionsEnabled)
+			{
+				return _targetAngle;
+			}
+
 			Vector2 axisInput = GetMoveInput();
 
 			if (axisInput == Vector2.zero)
@@ -106,6 +116,11 @@ namespace PhysicsCharacterController
 
 		private void PublishTouchMovementChange(Vector2 movementInput)
 		{
+			if (!AreNormalActionsEnabled)
+			{
+				return;
+			}
+
 			if (movementInput == Vector2.zero)
 			{
 				InvokeMoveStop();
@@ -117,6 +132,11 @@ namespace PhysicsCharacterController
 
 		private void PublishMovementFromAction(InputAction.CallbackContext context)
 		{
+			if (!AreNormalActionsEnabled)
+			{
+				return;
+			}
+
 			InvokeMoveStart(context.ReadValue<Vector2>());
 		}
 
@@ -127,7 +147,7 @@ namespace PhysicsCharacterController
 
 		private void JumpWhenRequested(InputAction.CallbackContext context)
 		{
-			if (_enableJump)
+			if (_enableJump && AreNormalActionsEnabled)
 			{
 				InvokeJumpPressed();
 			}
@@ -135,7 +155,7 @@ namespace PhysicsCharacterController
 
 		private void StartSprintingWhenRequested(InputAction.CallbackContext context)
 		{
-			if (_enableSprint)
+			if (_enableSprint && AreNormalActionsEnabled)
 			{
 				InvokeSprint(true);
 			}
@@ -148,7 +168,7 @@ namespace PhysicsCharacterController
 
 		private void StartCrouchingWhenRequested(InputAction.CallbackContext context)
 		{
-			if (_enableCrouch)
+			if (_enableCrouch && AreNormalActionsEnabled)
 			{
 				InvokeCrouch(true);
 			}
