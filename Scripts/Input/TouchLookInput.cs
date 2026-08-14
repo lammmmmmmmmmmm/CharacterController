@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -31,7 +32,11 @@ namespace PhysicsCharacterController
 
         public bool IsDragging { get; private set; }
         public Vector2 LookDeltaPixels { get; private set; }
+        public Vector2 ScreenPositionPixels { get; private set; }
         public bool IsLookActive => IsDragging;
+
+        public event Action OnPressed;
+        public event Action OnReleased;
 
         #region Unity Lifecycle
 
@@ -43,7 +48,7 @@ namespace PhysicsCharacterController
 
         private void OnEnable()
         {
-            ResetTouchState();
+            ResetTouchStateWithoutRelease();
         }
 
         private void Update()
@@ -62,7 +67,7 @@ namespace PhysicsCharacterController
 
         private void OnDisable()
         {
-            ResetTouchState();
+            ReleaseTouch();
         }
 
         #endregion
@@ -100,7 +105,7 @@ namespace PhysicsCharacterController
             Debug.LogWarning(
                 "Canceling camera look because the touchscreen became unavailable.",
                 this);
-            ResetTouchState();
+            ReleaseTouch();
         }
 
         private void UpdateTouchscreen(Touchscreen touchscreen)
@@ -135,7 +140,7 @@ namespace PhysicsCharacterController
 
             if (IsDragging && !hasFoundActiveTouch)
             {
-                ResetTouchState();
+                ReleaseTouch();
             }
         }
 
@@ -157,19 +162,33 @@ namespace PhysicsCharacterController
         {
             _activeTouchId = touchId;
             _previousScreenPositionPixels = screenPositionPixels;
+            ScreenPositionPixels = screenPositionPixels;
             IsDragging = true;
+            OnPressed?.Invoke();
         }
 
         private void ContinueTouch(Vector2 screenPositionPixels)
         {
             LookDeltaPixels = screenPositionPixels - _previousScreenPositionPixels;
             _previousScreenPositionPixels = screenPositionPixels;
+            ScreenPositionPixels = screenPositionPixels;
         }
 
-        private void ResetTouchState()
+        private void ReleaseTouch()
+        {
+            bool wasDragging = IsDragging;
+            ResetTouchStateWithoutRelease();
+            if (wasDragging)
+            {
+                OnReleased?.Invoke();
+            }
+        }
+
+        private void ResetTouchStateWithoutRelease()
         {
             _activeTouchId = NO_TOUCH_ID;
             _previousScreenPositionPixels = Vector2.zero;
+            ScreenPositionPixels = Vector2.zero;
             IsDragging = false;
             LookDeltaPixels = Vector2.zero;
         }
