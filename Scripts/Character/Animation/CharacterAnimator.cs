@@ -13,8 +13,6 @@ namespace PhysicsCharacterController
         [SerializeField] private AnimationChannelSO[] _animationChannelSOs;
 
         private readonly Dictionary<AnimationChannelSO, AnimationLayerChannel> _animationChannels = new();
-        private LinearMixerTransition _activeTransitionMixer;
-
         private AnimancerState _activeTransitionState;
         private AnimancerState _currentBaseState;
 
@@ -74,6 +72,7 @@ namespace PhysicsCharacterController
             {
                 CancelPendingTransitionPlayback();
                 _currentBaseState = BaseLayer.Play(mixer);
+                TrySetMixerParameter(_currentBaseState, sourceSpeed);
             }
 
             CurrentTag = tag;
@@ -98,15 +97,21 @@ namespace PhysicsCharacterController
 
         public void UpdateTransitionMixerParameter(float sourceSpeed)
         {
-            if (!TrySetMixerParameter(_activeTransitionMixer, sourceSpeed))
-            {
-                _activeTransitionMixer = null;
-            }
+            TrySetMixerParameter(_activeTransitionState, sourceSpeed);
         }
 
-        public void UpdateLocomotionAnimationParameters(LinearMixerTransition locomotionMixer, float sourceSpeed)
+        public void UpdateLocomotionAnimationParameter(float sourceSpeed)
         {
-            TrySetMixerParameter(locomotionMixer, sourceSpeed);
+            if (_queuedBaseMixer != null)
+            {
+                _queuedBaseSourceSpeed = sourceSpeed;
+                return;
+            }
+
+            if (!TrySetMixerParameter(_currentBaseState, sourceSpeed))
+            {
+                Debug.LogError($"Cannot update locomotion for '{name}' because its active base animation is not a valid mixer state.", this);
+            }
         }
 
         public bool Play(
@@ -243,13 +248,11 @@ namespace PhysicsCharacterController
         {
             if (selection.Mode == TransitionLibrary.TransitionMode.Mixer)
             {
-                _activeTransitionMixer = selection.Mixer;
                 _activeTransitionState = BaseLayer.Play(selection.Mixer);
-                TrySetMixerParameter(selection.Mixer, sourceSpeed);
+                TrySetMixerParameter(_activeTransitionState, sourceSpeed);
             }
             else
             {
-                _activeTransitionMixer = null;
                 _activeTransitionState = BaseLayer.Play(selection.Clip);
             }
 
@@ -264,16 +267,12 @@ namespace PhysicsCharacterController
                 return;
             }
 
-            // The transition may be a clip (no mixer), or the mixer may have been nulled by
-            // UpdateTransitionMixerParameter when its state was momentarily invalid. In either
-            // case the queue-time speed seeded in QueueBaseAnimation remains the correct value.
-            if (_activeTransitionMixer != null && IsRuntimeStateValid(_activeTransitionMixer.State))
+            if (_activeTransitionState is LinearMixerState activeTransitionMixerState && IsRuntimeStateValid(activeTransitionMixerState))
             {
-                _queuedBaseSourceSpeed = _activeTransitionMixer.State.Parameter;
+                _queuedBaseSourceSpeed = activeTransitionMixerState.Parameter;
             }
 
             _isTransitionPlayingOnBaseLayer = false;
-            _activeTransitionMixer = null;
             if (IsRuntimeStateValid(_activeTransitionState))
             {
                 _activeTransitionState.Events(this).OnEnd = null;
@@ -283,7 +282,7 @@ namespace PhysicsCharacterController
             if (_queuedBaseMixer != null)
             {
                 _currentBaseState = BaseLayer.Play(_queuedBaseMixer);
-                TrySetMixerParameter(_queuedBaseMixer, _queuedBaseSourceSpeed);
+                TrySetMixerParameter(_currentBaseState, _queuedBaseSourceSpeed);
             }
             else if (_queuedBaseClip != null)
             {
@@ -296,7 +295,6 @@ namespace PhysicsCharacterController
         private void CancelPendingTransitionPlayback()
         {
             _isTransitionPlayingOnBaseLayer = false;
-            _activeTransitionMixer = null;
 
             if (IsRuntimeStateValid(_activeTransitionState))
             {
@@ -329,7 +327,6 @@ namespace PhysicsCharacterController
 
         private void ResetRuntimeStateCache()
         {
-            _activeTransitionMixer = null;
             _activeTransitionState = null;
             _currentBaseState = null;
             _isTransitionPlayingOnBaseLayer = false;
@@ -345,21 +342,14 @@ namespace PhysicsCharacterController
             }
         }
 
-        private static bool TrySetMixerParameter(LinearMixerTransition mixer, float sourceSpeed)
+        private static bool TrySetMixerParameter(AnimancerState state, float sourceSpeed)
         {
-            if (mixer == null)
+            if (!IsRuntimeStateValid(state) || state is not LinearMixerState mixerState)
             {
                 return false;
             }
 
-            AnimancerState state = mixer.State;
-
-            if (!IsRuntimeStateValid(state))
-            {
-                return false;
-            }
-
-            ((LinearMixerState)state).Parameter = sourceSpeed;
+            mixerState.Parameter = sourceSpeed;
             return true;
         }
 

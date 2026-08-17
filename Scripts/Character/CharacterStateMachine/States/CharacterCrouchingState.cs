@@ -31,7 +31,7 @@ namespace PhysicsCharacterController.CharacterStateMachine.States
         protected override void OnFixedUpdate(float fixedDeltaTime)
         {
             float currentSpeed = _context.CharacterMove.CurrentSpeed;
-            _context.Animator.UpdateLocomotionAnimationParameters(_context.CrouchingAnimationData.LocomotionMixer, currentSpeed);
+            _context.Animator.UpdateLocomotionAnimationParameter(currentSpeed);
             _context.Animator.UpdateTransitionMixerParameter(currentSpeed);
         }
     }
