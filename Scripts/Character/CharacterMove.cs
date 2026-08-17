@@ -1,3 +1,6 @@
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 using UnityEngine;
 
 namespace PhysicsCharacterController
@@ -127,7 +130,11 @@ namespace PhysicsCharacterController
         private void OnDrawGizmosSelected()
         {
             Gizmos.color = Color.cyan;
-            Gizmos.DrawLine(transform.position, transform.position + _input.HorizontalMoveDirection * 2f);
+            var offset = new Vector3(0f, 0.1f, 0f);
+            Gizmos.DrawLine(transform.position + offset, transform.position + offset + _input.HorizontalMoveDirection * 2f);
+#if UNITY_EDITOR
+            Handles.Label(transform.position + offset + _input.HorizontalMoveDirection * 2f, "Input Direction");
+#endif
         }
     }
 }

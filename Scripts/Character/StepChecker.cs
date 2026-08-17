@@ -1,3 +1,6 @@
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 using UnityEngine;
 
 namespace PhysicsCharacterController
@@ -105,31 +108,31 @@ namespace PhysicsCharacterController
                 return;
             }
 
-            Vector3 bottomStepPos = transform.position - new Vector3(0f, _feetOffset, 0f) +
-                                    new Vector3(0f, 0.05f, 0f);
+            Vector3 bottomStepPos = transform.position - new Vector3(0f, _feetOffset, 0f) + new Vector3(0f, 0.05f, 0f);
+            Vector3 maxStepHeightPos = bottomStepPos + Vector3.up * _maxStepHeight;
             Vector3 forward = transform.forward;
 
             Gizmos.color = IsTouchingStep ? Color.green : Color.black;
 
             // Forward
             Gizmos.DrawLine(bottomStepPos, bottomStepPos + forward * _stepCheckerThreshold);
-            Gizmos.DrawLine(
-                bottomStepPos + new Vector3(0f, _maxStepHeight, 0f),
-                bottomStepPos + new Vector3(0f, _maxStepHeight, 0f) + forward * (_stepCheckerThreshold + 0.05f));
+            Handles.Label(bottomStepPos + forward * _stepCheckerThreshold, "Step Forward");
+            Gizmos.DrawLine(maxStepHeightPos, maxStepHeightPos + forward * (_stepCheckerThreshold + 0.05f));
+            Handles.Label(maxStepHeightPos + forward * (_stepCheckerThreshold + 0.05f), "Step Forward");
 
             // 45 degrees
             Vector3 forward45 = Quaternion.AngleAxis(45, Vector3.up) * forward;
             Gizmos.DrawLine(bottomStepPos, bottomStepPos + forward45 * _stepCheckerThreshold);
-            Gizmos.DrawLine(
-                bottomStepPos + new Vector3(0f, _maxStepHeight, 0f),
-                bottomStepPos + new Vector3(0f, _maxStepHeight, 0f) + forward45 * (_stepCheckerThreshold + 0.05f));
+            Handles.Label(bottomStepPos + forward45 * _stepCheckerThreshold, "Step 45");
+            Gizmos.DrawLine(maxStepHeightPos, maxStepHeightPos + forward45 * (_stepCheckerThreshold + 0.05f));
+            Handles.Label(maxStepHeightPos + forward45 * (_stepCheckerThreshold + 0.05f), "Step 45");
 
             // -45 degrees
             Vector3 forwardMinus45 = Quaternion.AngleAxis(-45, Vector3.up) * forward;
             Gizmos.DrawLine(bottomStepPos, bottomStepPos + forwardMinus45 * _stepCheckerThreshold);
-            Gizmos.DrawLine(
-                bottomStepPos + new Vector3(0f, _maxStepHeight, 0f),
-                bottomStepPos + new Vector3(0f, _maxStepHeight, 0f) + forwardMinus45 * (_stepCheckerThreshold + 0.05f));
+            Handles.Label(bottomStepPos + forwardMinus45 * _stepCheckerThreshold, "Step -45");
+            Gizmos.DrawLine(maxStepHeightPos, maxStepHeightPos + forwardMinus45 * (_stepCheckerThreshold + 0.05f));
+            Handles.Label(maxStepHeightPos + forwardMinus45 * (_stepCheckerThreshold + 0.05f), "Step -45");
         }
 #endif
     }

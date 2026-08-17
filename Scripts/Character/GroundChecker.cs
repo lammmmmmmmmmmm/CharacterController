@@ -1,3 +1,6 @@
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 using UnityEngine;
 
 namespace PhysicsCharacterController
@@ -61,6 +64,11 @@ namespace PhysicsCharacterController
 
             Gizmos.color = Color.yellow;
             Gizmos.DrawLine(castOrigin, castEnd);
+
+#if UNITY_EDITOR
+            Handles.Label(castOrigin, "Ground Check Start");
+            Handles.Label(castEnd, "Ground Check End");
+#endif
         }
 
         #endregion

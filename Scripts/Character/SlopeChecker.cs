@@ -1,3 +1,6 @@
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 using UnityEngine;
 
 namespace PhysicsCharacterController
@@ -226,7 +229,7 @@ namespace PhysicsCharacterController
         [Header("Debug")]
         [SerializeField] private bool _debug = true;
 
-        private void OnDrawGizmos()
+        private void OnDrawGizmosSelected()
         {
             if (!_debug) return;
 
@@ -235,11 +238,20 @@ namespace PhysicsCharacterController
 
         private void DrawDirectionVectors()
         {
-            Gizmos.color = Color.blue;
-            Gizmos.DrawLine(transform.position, transform.position + _slopeAlignedForward * 2f);
+            if (_slopeAlignedForward == Vector3.zero || _gravityProjectedOnNormal == Vector3.zero)
+            {
+                return;
+            }
 
+            Vector3 slopeDirectionEnd = transform.position + _slopeAlignedForward * 2f;
+            Gizmos.color = Color.blue;
+            Gizmos.DrawLine(transform.position, slopeDirectionEnd);
+            Handles.Label(slopeDirectionEnd, "Slope Direction");
+
+            Vector3 gravityProjectionEnd = transform.position + _gravityProjectedOnNormal * 2f;
             Gizmos.color = Color.red;
-            Gizmos.DrawLine(transform.position, transform.position + _gravityProjectedOnNormal * 2f);
+            Gizmos.DrawLine(transform.position, gravityProjectionEnd);
+            Handles.Label(gravityProjectionEnd, "Gravity Projection");
         }
 #endif
     }
