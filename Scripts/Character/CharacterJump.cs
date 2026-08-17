@@ -18,6 +18,8 @@ namespace PhysicsCharacterController
 
         public event Action OnJump;
 
+        public bool IsJumpInProgress { get; private set; }
+
         public float MaxJumpForce
         {
             get => _maxJumpForce;
@@ -88,6 +90,8 @@ namespace PhysicsCharacterController
 
         public bool TryExecuteJump()
         {
+            ClearJumpStateWhenLanded();
+
             bool shouldExecuteRequestedJump = _hasJumpRequested && CanJumpNow();
             // Evaluate the landing surface from the fresh ground hit: SlopeChecker's cached state
             // is one tick stale on the landing tick, which let buffered jumps fire off
@@ -121,7 +125,16 @@ namespace PhysicsCharacterController
         {
             ResetVerticalVelocity();
             _rigidbody.AddForce(Vector3.up * CurrentJumpForce, ForceMode.VelocityChange);
+            IsJumpInProgress = true;
             OnJump?.Invoke();
+        }
+
+        private void ClearJumpStateWhenLanded()
+        {
+            if (_groundChecker.JustLanded)
+            {
+                IsJumpInProgress = false;
+            }
         }
 
         public void HandleJumpBuffer(float deltaTime)

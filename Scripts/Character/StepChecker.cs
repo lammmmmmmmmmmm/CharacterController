@@ -17,10 +17,13 @@ namespace PhysicsCharacterController
         [SerializeField] private float _stepCheckerThreshold = 0.6f;
         [Tooltip("Max climbable step height")]
         [SerializeField] private float _maxStepHeight = 0.74f;
-        [SerializeField] private float _stepUpForce = 1.5f;
+        [Tooltip("Vertical speed used while automatically climbing a step")]
+        [SerializeField] private float _stepUpSpeedMetersPerSecond = 1.5f;
 
         [Header("References")]
         [SerializeField] private BaseCharacterInput _input;
+        [SerializeField] private GroundChecker _groundChecker;
+        [SerializeField] private CharacterJump _characterJump;
 
         private float _feetOffset;
 
@@ -38,16 +41,24 @@ namespace PhysicsCharacterController
 
         public Vector3 GetVelocityContribution(Vector3 currentVelocity, Vector3 desiredMovement)
         {
-            if (IsTouchingStep)
+            if (!IsTouchingStep || _characterJump.IsJumpInProgress)
             {
-                return Vector3.up * _stepUpForce;
+                return Vector3.zero;
             }
 
-            return Vector3.zero;
+            float requiredUpwardSpeedMetersPerSecond = Mathf.Max(0f, _stepUpSpeedMetersPerSecond - currentVelocity.y);
+            return Vector3.up * requiredUpwardSpeedMetersPerSecond;
         }
 
         private void Check(Vector3 globalForward)
         {
+            bool canContinueStep = IsTouchingStep && !_characterJump.IsJumpInProgress;
+            if (!_groundChecker.IsGrounded && !canContinueStep)
+            {
+                IsTouchingStep = false;
+                return;
+            }
+
             bool isTouchingStep = false;
             Vector3 bottomStepPos = transform.position - new Vector3(0f, _feetOffset, 0f) +
                                     new Vector3(0f, 0.05f, 0f);

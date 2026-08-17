@@ -63,8 +63,7 @@ namespace PhysicsCharacterController
 
         private Vector3 CalculateBaseGravity()
         {
-            bool shouldUseNormalGravity = _slopeChecker.IsSlidePreventionActive
-                || _stepChecker.IsTouchingStep;
+            bool shouldUseNormalGravity = _slopeChecker.IsSlidePreventionActive || _stepChecker.IsTouchingStep;
 
             if (shouldUseNormalGravity)
             {

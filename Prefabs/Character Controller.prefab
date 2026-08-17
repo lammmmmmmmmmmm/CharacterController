@@ -51,8 +51,9 @@ MonoBehaviour:
     _airborneSmoothTimeSeconds: 0.05
     _airborneActivationDelaySeconds: 0.1
   _maxVerticalOffsetMeters: 0.25
-  _fullRoughnessNormalRateDegreesPerSecond: 60
-  _roughnessReleaseSeconds: 0.4
+  _surfaceRoughnessTracker:
+    _fullRoughnessNormalRateDegreesPerSecond: 60
+    _roughnessReleaseSeconds: 0.4
   _horizontalSmoothTimeSeconds: 0.06
   _maxHorizontalOffsetMeters: 0.1
 --- !u!1 &4091744628385212224
@@ -219,8 +220,10 @@ MonoBehaviour:
     m_Bits: 1
   _stepCheckerThreshold: 0.6
   _maxStepHeight: 0.7
-  _stepUpForce: 1.5
+  _stepUpSpeedMetersPerSecond: 1.5
   _input: {fileID: 1978479410493231783}
+  _groundChecker: {fileID: 5381384936787526104}
+  _characterJump: {fileID: 7636482674149424828}
 --- !u!114 &177501398167541763
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -303,6 +306,7 @@ MonoBehaviour:
   _jumpAction: {fileID: -3541802990452617309, guid: 010bd85fdf203f34d94abf6f5ad3e876, type: 3}
   _sprintAction: {fileID: 5305346917543414694, guid: 010bd85fdf203f34d94abf6f5ad3e876, type: 3}
   _crouchAction: {fileID: 6499772605015659939, guid: 010bd85fdf203f34d94abf6f5ad3e876, type: 3}
+  _touchJoystickInput: {fileID: 0}
   _enableJump: 1
   _enableCrouch: 1
   _enableSprint: 1
@@ -358,13 +362,10 @@ MonoBehaviour:
   _crouchSpeedMultiplier: 0.248
   _crouchHeightMultiplier: 0.5
   _transitionDurationSeconds: 0.2
-  _povNormalHeadHeight: {x: 0, y: 0.5, z: -0.1}
-  _povCrouchHeadHeight: {x: 0, y: -0.1, z: -0.1}
   _obstacleMask:
     serializedVersion: 2
     m_Bits: 1
   _obstacleCheckRadius: 0.2
-  _headPoint: {fileID: 0}
   _groundChecker: {fileID: 5381384936787526104}
   _input: {fileID: 1978479410493231783}
 --- !u!114 &8884444090963779118
@@ -401,7 +402,7 @@ MonoBehaviour:
   _input: {fileID: 1978479410493231783}
   _characterCamera: {fileID: 0}
   _characterParent: {fileID: 4091744628385212224}
-  _rotationSmooth: 0.1
+  _rotationSmoothingDurationSeconds: 0.1
 --- !u!114 &5436775728411592474
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -441,6 +442,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _animancer: {fileID: 6997497444427228531}
   _transitions: {fileID: 11400000, guid: fe4d9ae33f1944e45bc1a4c906ccdcd0, type: 2}
+  _animationChannelSOs: []
 --- !u!1001 &3813759627713680846
 PrefabInstance:
   m_ObjectHideFlags: 0
