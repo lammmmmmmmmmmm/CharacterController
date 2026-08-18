@@ -25,7 +25,8 @@ namespace PhysicsCharacterController
 
         #region Public Methods
 
-        public bool Play(object animationOwner, int animationPriority, AnimationClip animationClip, float fadeDurationSeconds)
+        public bool Play(object animationOwner, int animationPriority, AnimationClip animationClip, float fadeDurationSeconds,
+            bool shouldRestartAnimation = false)
         {
             if (!CanControl(animationOwner, animationPriority))
             {
@@ -38,12 +39,17 @@ namespace PhysicsCharacterController
             _owner = animationOwner;
             _priority = animationPriority;
 
-            if (!hasOwnerChanged && _activeAnimationClip == animationClip)
+            if (!hasOwnerChanged && _activeAnimationClip == animationClip && !shouldRestartAnimation)
             {
                 return true; // Same owner, same clip: nothing to do.
             }
 
-            _layer.Play(animationClip, fadeDurationSeconds);
+            AnimancerState animationState = _layer.Play(animationClip, fadeDurationSeconds);
+            if (shouldRestartAnimation)
+            {
+                animationState.Time = 0f;
+            }
+
             _layer.StartFade(1f, fadeDurationSeconds);
             _activeAnimationClip = animationClip;
             return true;

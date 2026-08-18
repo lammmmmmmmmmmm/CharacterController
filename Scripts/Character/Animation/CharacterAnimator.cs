@@ -119,7 +119,8 @@ namespace PhysicsCharacterController
             object animationOwner,
             int animationPriority,
             AnimationClip animationClip,
-            float fadeDurationSeconds)
+            float fadeDurationSeconds,
+            bool shouldRestartAnimation = false)
         {
             if (animationOwner == null || animationClip == null || fadeDurationSeconds < 0f)
             {
@@ -134,7 +135,7 @@ namespace PhysicsCharacterController
                 return false;
             }
 
-            return animationChannel.Play(animationOwner, animationPriority, animationClip, fadeDurationSeconds);
+            return animationChannel.Play(animationOwner, animationPriority, animationClip, fadeDurationSeconds, shouldRestartAnimation);
         }
 
         public bool Stop(AnimationChannelSO animationChannelSO, object animationOwner, float fadeDurationSeconds)
