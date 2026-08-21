@@ -14,6 +14,9 @@ namespace PhysicsCharacterController
         private bool _reachedEndOfPath = true;
         private Vector3 _currentTarget;
 
+        public bool HasReachedDestination => _reachedEndOfPath;
+        public Vector3 CurrentTargetPositionMeters => _currentTarget;
+
         private void Update()
         {
             UpdateCurrentTarget();
@@ -44,7 +47,20 @@ namespace PhysicsCharacterController
 
         public void SetTarget(Vector3 targetPosition)
         {
+            _currentTarget = targetPosition;
             _seeker.StartPath(transform.position, targetPosition, OnPathComplete);
+        }
+
+        public void Stop()
+        {
+            _currentPath = null;
+            _currentWaypointIndex = 0;
+            _currentTarget = transform.position;
+            if (!_reachedEndOfPath)
+            {
+                _reachedEndOfPath = true;
+                InvokeMoveStop();
+            }
         }
 
         private void UpdateCurrentTarget()
