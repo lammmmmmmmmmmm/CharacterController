@@ -95,7 +95,7 @@ namespace PhysicsCharacterController
                 {
                     Vector3 checkDirection = Quaternion.AngleAxis(angle, transform.up) * forwardDirection;
 
-                    if (Physics.Raycast(checkOrigin, checkDirection, out RaycastHit hit, _checkDistance, _wallMask)
+                    if (Physics.Raycast(checkOrigin, checkDirection, out RaycastHit hit, _checkDistance, _wallMask, QueryTriggerInteraction.Ignore)
                         && IsTooSteepToWalk(hit.normal))
                     {
                         WallNormal = hit.normal;

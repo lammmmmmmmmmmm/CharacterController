@@ -83,7 +83,8 @@ namespace PhysicsCharacterController
 
         private bool CheckStepInDirection(Vector3 bottomStepPos, Vector3 direction)
         {
-            if (!Physics.Raycast(bottomStepPos, direction, out var stepLowerHit, _stepCheckerThreshold, _groundMask))
+            if (!Physics.Raycast(bottomStepPos, direction, out var stepLowerHit, _stepCheckerThreshold, _groundMask,
+                    QueryTriggerInteraction.Ignore))
             {
                 return false;
             }
@@ -94,7 +95,8 @@ namespace PhysicsCharacterController
                 direction,
                 out _,
                 _stepCheckerThreshold + 0.05f,
-                _groundMask);
+                _groundMask,
+                QueryTriggerInteraction.Ignore);
 
             return isVerticalSurface && hasSpaceAbove;
         }
