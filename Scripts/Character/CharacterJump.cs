@@ -54,12 +54,14 @@ namespace PhysicsCharacterController
         {
             _input.OnJumpPressed += HandleJumpInput;
             _input.OnNormalActionsAvailabilityChanged += CancelPendingJumpWhenActionsBecomeUnavailable;
+            _input.OnTerrestrialActionsAvailabilityChanged += CancelPendingJumpWhenActionsBecomeUnavailable;
         }
 
         private void OnDisable()
         {
             _input.OnJumpPressed -= HandleJumpInput;
             _input.OnNormalActionsAvailabilityChanged -= CancelPendingJumpWhenActionsBecomeUnavailable;
+            _input.OnTerrestrialActionsAvailabilityChanged -= CancelPendingJumpWhenActionsBecomeUnavailable;
         }
 
         private void HandleJumpInput()

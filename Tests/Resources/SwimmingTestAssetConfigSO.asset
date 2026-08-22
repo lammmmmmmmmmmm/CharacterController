@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 88835e35f39b2084db3644b42d6a3dc4, type: 3}
+  m_Name: SwimmingTestAssetConfigSO
+  m_EditorClassIdentifier: PhysicsCharacterController.PlayModeTests::PhysicsCharacterController.Tests.PlayMode.SwimmingTestAssetConfigSO
+  _playerPrefab:
+    m_AssetGUID: c47a17ba764f3ef4db5fff99e93df6c6
+    m_SubObjectName: 
+    m_SubObjectType: 
+    m_SubObjectGUID: 
+    m_EditorAssetChanged: 0
+  _swimmingPoolPrefab:
+    m_AssetGUID: 12a77f2ac7e519d4a881b87aa61915a9
+    m_SubObjectName: 
+    m_SubObjectType: 
+    m_SubObjectGUID: 
+    m_EditorAssetChanged: 0

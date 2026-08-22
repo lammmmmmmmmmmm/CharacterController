@@ -19,6 +19,9 @@ namespace PhysicsCharacterController
         private Rigidbody _characterRigidbody;
         private bool _isLockedToCamera;
         private bool _isCameraFacingOverrideEnabled;
+        private bool _isAutomaticRotationEnabled = true;
+
+        public Transform CameraTransform => _characterCamera.transform;
 
         #region Unity Lifecycle
 
@@ -46,13 +49,35 @@ namespace PhysicsCharacterController
             _isCameraFacingOverrideEnabled = isEnabled;
         }
 
+        public void SetAutomaticRotationEnabled(bool isEnabled)
+        {
+            if (_isAutomaticRotationEnabled == isEnabled)
+            {
+                return;
+            }
+
+            _isAutomaticRotationEnabled = isEnabled;
+            if (isEnabled)
+            {
+                _yawSolver.ResetSmoothingVelocity();
+            }
+        }
+
+        public void SetFacingDirectionImmediately(Vector3 worldDirection)
+        {
+            _yawSolver.ResetSmoothingVelocity();
+            _characterRigidbody.rotation = _yawSolver.ResolveHorizontalFacingRotation(
+                worldDirection,
+                _characterRigidbody.rotation);
+        }
+
         #endregion
 
         #region Private Methods
 
         private void RotateCharacter()
         {
-            if (!_input.AreNormalActionsEnabled)
+            if (!_input.AreNormalActionsEnabled || !_isAutomaticRotationEnabled)
             {
                 return;
             }

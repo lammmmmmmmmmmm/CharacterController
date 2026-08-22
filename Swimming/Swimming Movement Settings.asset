@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e7ae08d90b3a9d84fa9088b7eb85d5ac, type: 3}
+  m_Name: Swimming Movement Settings
+  m_EditorClassIdentifier: PhysicsCharacterController.Runtime::PhysicsCharacterController.SwimmingMovementSettingsSO
+  _enterSwimmingImmersion01: 0.65
+  _exitSwimmingImmersion01: 0.45
+  _diveDirectionYThreshold: -0.5
+  _surfaceRootDepthMeters: 0.2
+  _surfaceToleranceMeters: 0.08
+  _maximumSurfaceStabilizationSpeedMetersPerSecond: 2.5
+  _normalSpeedMetersPerSecond: 3
+  _fastSpeedMetersPerSecond: 6
+  _accelerationMetersPerSecondSquared: 10
+  _decelerationMetersPerSecondSquared: 8
+  _movementInputThreshold: 0.01
+  _collisionSweepSkinMeters: 0.05
+  _yawSpeedDegreesPerSecond: 360
+  _pitchSpeedDegreesPerSecond: 180
+  _underwaterColliderRotationSpeedDegreesPerSecond: 360

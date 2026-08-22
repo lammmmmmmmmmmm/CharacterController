@@ -27,7 +27,7 @@ namespace PhysicsCharacterController
 
 		private void Awake()
 		{
-			_orbitalFollow = GetComponent<CinemachineOrbitalFollow>();
+			CacheOrbitalFollow();
 		}
 
 		private void Update()
@@ -50,6 +50,7 @@ namespace PhysicsCharacterController
 
 		public void SetInitialValue(float valueX, float valueY)
 		{
+			CacheOrbitalFollow();
 			_input = new Vector2(valueX, valueY);
 			_currentInputVector = _input;
 
@@ -62,6 +63,11 @@ namespace PhysicsCharacterController
 			return UnityEngine.Device.Application.isMobilePlatform
 				? _cameraLookInputSource.ReadMobileLookDeltaPixels()
 				: _cameraActionReference.action.ReadValue<Vector2>();
+		}
+
+		private void CacheOrbitalFollow()
+		{
+			_orbitalFollow = GetComponent<CinemachineOrbitalFollow>();
 		}
 	}
 }

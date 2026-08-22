@@ -81,6 +81,10 @@ GameObject:
   - component: {fileID: 8137631592807362314}
   - component: {fileID: 5436775728411592474}
   - component: {fileID: 9031743307242274759}
+  - component: {fileID: 8346789935785575982}
+  - component: {fileID: 4769975595707810438}
+  - component: {fileID: 8362966048400329051}
+  - component: {fileID: 6566680108622118817}
   m_Layer: 0
   m_Name: Character Controller
   m_TagString: Untagged
@@ -102,6 +106,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 3564097700261540322}
+  - {fileID: 1134335504071550976}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!136 &1667933343544081482
@@ -420,13 +425,21 @@ MonoBehaviour:
   _characterJump: {fileID: 7636482674149424828}
   _characterGravity: {fileID: 8884444090963779118}
   _groundChecker: {fileID: 5381384936787526104}
+  _input: {fileID: 1978479410493231783}
+  _characterRotation: {fileID: 8137631592807362314}
+  _waterSensor: {fileID: 8346789935785575982}
+  _swimmingMovement: {fileID: 4769975595707810438}
   _characterAnimator: {fileID: 9031743307242274759}
   _standingAnimationData: {fileID: 11400000, guid: f31c56cb342e51b458333801bb6786df, type: 2}
   _crouchingAnimationData: {fileID: 11400000, guid: b8028291072454e40b7edf9924109132, type: 2}
   _airborneAnimationData: {fileID: 11400000, guid: 70f3a2aa0b6aa274f997125e88c98523, type: 2}
+  _surfaceSwimmingAnimationData: {fileID: 11400000, guid: e8b7138a7023ff548b33b8681b81a192, type: 2}
+  _underwaterSwimmingAnimationData: {fileID: 11400000, guid: 409460c17033d484a94091ef9cfbcb83, type: 2}
   _standingStateId: {fileID: 11400000, guid: 3bb963322e8a2054c9f54af71e864afd, type: 2}
   _crouchingStateId: {fileID: 11400000, guid: bddf28defe97b944c9ed919edb2d1b0a, type: 2}
   _airborneStateId: {fileID: 11400000, guid: 616a5754d7f44db4fa750a776090d5c7, type: 2}
+  _surfaceSwimmingStateId: {fileID: 11400000, guid: 76deec147ad78d84594b93fd0361b945, type: 2}
+  _underwaterSwimmingStateId: {fileID: 11400000, guid: cdfd420a31a87384d9d14e5c76202add, type: 2}
   _logActiveStatePath: 0
 --- !u!114 &9031743307242274759
 MonoBehaviour:
@@ -443,6 +456,131 @@ MonoBehaviour:
   _animancer: {fileID: 6997497444427228531}
   _transitions: {fileID: 11400000, guid: fe4d9ae33f1944e45bc1a4c906ccdcd0, type: 2}
   _animationChannelSOs: []
+--- !u!114 &8346789935785575982
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4091744628385212224}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 67e8804960cd00e4d89ae9b6fb97595f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: PhysicsCharacterController.Runtime::PhysicsCharacterController.CharacterWaterSensor
+  _characterColliderShape: {fileID: 1759215851550013945}
+  _standingCollider: {fileID: 1667933343544081482}
+  _settingsSO: {fileID: 11400000, guid: 618ab0b01f7266245abf87f1ad120688, type: 2}
+  _waterVolumeMask:
+    serializedVersion: 2
+    m_Bits: 16
+--- !u!114 &4769975595707810438
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4091744628385212224}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 36142b82bcc9e8b419637a22a8c04599, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: PhysicsCharacterController.Runtime::PhysicsCharacterController.CharacterSwimmingMovement
+  _settingsSO: {fileID: 11400000, guid: 618ab0b01f7266245abf87f1ad120688, type: 2}
+  _waterSensor: {fileID: 8346789935785575982}
+  _input: {fileID: 1978479410493231783}
+  _characterRotation: {fileID: 8137631592807362314}
+  _rigidbody: {fileID: 7698808979737546365}
+  _underwaterCollider: {fileID: 8362966048400329051}
+  _visualOrientation: {fileID: 6566680108622118817}
+--- !u!114 &8362966048400329051
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4091744628385212224}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4becacc1eb8ffd64aac060c20fe25403, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: PhysicsCharacterController.Runtime::PhysicsCharacterController.UnderwaterSwimmingCollider
+  _uprightCollider: {fileID: 1667933343544081482}
+  _underwaterColliderPivot: {fileID: 1134335504071550976}
+  _underwaterCollider: {fileID: 5062252309096857855}
+  _swimmingPhysicsMaterial: {fileID: 13400000, guid: 1bf6cd3ce29c82f4eba0bfdd855d4b09, type: 2}
+  _solidCollisionMask:
+    serializedVersion: 2
+    m_Bits: 73
+  _rigidbody: {fileID: 7698808979737546365}
+--- !u!114 &6566680108622118817
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4091744628385212224}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9ef7dec6275bef447937a257ae111232, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: PhysicsCharacterController.Runtime::PhysicsCharacterController.CharacterSwimmingVisualOrientation
+  _meshTransform: {fileID: 3564097700261540322}
+--- !u!1 &5891816821523033180
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1134335504071550976}
+  - component: {fileID: 5062252309096857855}
+  m_Layer: 0
+  m_Name: Underwater Collider Pivot
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1134335504071550976
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5891816821523033180}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 5754172689165299980}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!136 &5062252309096857855
+CapsuleCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5891816821523033180}
+  m_Material: {fileID: 13400000, guid: 1bf6cd3ce29c82f4eba0bfdd855d4b09, type: 2}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 0
+  serializedVersion: 2
+  m_Radius: 0.45
+  m_Height: 2
+  m_Direction: 2
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1001 &3813759627713680846
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -494,6 +632,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: bfa42ba6d484e4e448024c9acf736ce9, type: 3}
       propertyPath: m_Name
       value: PolygonSyntyCharacter
+      objectReference: {fileID: 0}
+    - target: {fileID: 5866666021909216657, guid: bfa42ba6d484e4e448024c9acf736ce9, type: 3}
+      propertyPath: m_ApplyRootMotion
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

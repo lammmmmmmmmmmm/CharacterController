@@ -25,7 +25,7 @@ namespace PhysicsCharacterController.CharacterStateMachine.States
 
             if (_context.IsGrounded && _minimumAirborneTimer <= 0f)
             {
-                return ((CharacterRootState)Parent).Grounded;
+                return ((CharacterTerrestrialState)Parent).Grounded;
             }
 
             return null;

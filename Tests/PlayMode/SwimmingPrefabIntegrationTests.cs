@@ -1,0 +1,406 @@
+using System.Collections;
+using NUnit.Framework;
+using UnityEngine;
+using UnityEngine.AddressableAssets;
+using UnityEngine.ResourceManagement.AsyncOperations;
+using UnityEngine.TestTools;
+using VContainer;
+using VContainer.Unity;
+
+namespace PhysicsCharacterController.Tests.PlayMode
+{
+    public sealed class SwimmingPrefabIntegrationTests
+    {
+        private const float TEST_POOL_ROOT_HEIGHT_METERS = 1000f;
+
+        private IObjectResolver _container;
+        private AsyncOperationHandle<GameObject> _playerPrefabHandle;
+        private AsyncOperationHandle<GameObject> _poolPrefabHandle;
+        private GameObject _playerInstance;
+        private GameObject _poolInstance;
+        private UnderwaterSwimmingCollider _underwaterCollider;
+        private WaterVolume _waterVolume;
+        private float _testPoolSurfaceHeightMeters;
+        private float _testPoolFloorTopHeightMeters;
+
+        [UnitySetUp]
+        public IEnumerator SetUp()
+        {
+            SwimmingTestAssetConfigSO configSO = Resources.Load<SwimmingTestAssetConfigSO>("SwimmingTestAssetConfigSO");
+            _playerPrefabHandle = Addressables.LoadAssetAsync<GameObject>(configSO.PlayerPrefab.RuntimeKey);
+            _poolPrefabHandle = Addressables.LoadAssetAsync<GameObject>(configSO.SwimmingPoolPrefab.RuntimeKey);
+            yield return _playerPrefabHandle;
+            yield return _poolPrefabHandle;
+
+            _container = new ContainerBuilder().Build();
+            _playerInstance = _container.Instantiate(_playerPrefabHandle.Result);
+            _poolInstance = _container.Instantiate(_poolPrefabHandle.Result);
+            _underwaterCollider = _playerInstance.GetComponentInChildren<UnderwaterSwimmingCollider>(true);
+            _waterVolume = _poolInstance.GetComponentInChildren<WaterVolume>(true);
+            _poolInstance.transform.position = Vector3.up * TEST_POOL_ROOT_HEIGHT_METERS;
+            Physics.SyncTransforms();
+            _testPoolSurfaceHeightMeters = _waterVolume.SurfaceHeightMeters;
+            _testPoolFloorTopHeightMeters = _poolInstance.transform.Find("Pool Bottom").GetComponent<Collider>().bounds.max.y;
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            Object.DestroyImmediate(_playerInstance);
+            Object.DestroyImmediate(_poolInstance);
+            _container?.Dispose();
+
+            if (_playerPrefabHandle.IsValid())
+            {
+                ReleaseAddressableAsset(_playerPrefabHandle);
+            }
+
+            if (_poolPrefabHandle.IsValid())
+            {
+                ReleaseAddressableAsset(_poolPrefabHandle);
+            }
+        }
+
+        [UnityTest]
+        public IEnumerator SurfaceImmersion_ActivatesSurfaceSwimmingAnimationState()
+        {
+            PlaceCharacter(new Vector3(0f, _testPoolSurfaceHeightMeters - 2f, 0f));
+
+            yield return new WaitForFixedUpdate();
+            yield return new WaitForFixedUpdate();
+            yield return new WaitForFixedUpdate();
+
+            CharacterSwimmingMovement swimmingMovement = _underwaterCollider.GetComponent<CharacterSwimmingMovement>();
+            PlaceCharacter(new Vector3(0f, swimmingMovement.SurfaceTargetRootHeightMeters, 0f));
+            yield return new WaitForFixedUpdate();
+            yield return new WaitForFixedUpdate();
+
+            Transform characterRoot = _underwaterCollider.transform;
+            CharacterAnimator animator = _underwaterCollider.GetComponent<CharacterAnimator>();
+            CharacterWaterSensor waterSensor = _underwaterCollider.GetComponent<CharacterWaterSensor>();
+            Assert.That(
+                animator.CurrentTag.name,
+                Is.EqualTo("Surface Swimming State"),
+                $"root={characterRoot.position}, immersion={waterSensor.Immersion01}, " +
+                $"surface={waterSensor.WaterSurfaceHeightMeters}, target={swimmingMovement.SurfaceTargetRootHeightMeters}, " +
+                $"shouldDive={swimmingMovement.ShouldDive()}, shouldReturn={swimmingMovement.ShouldReturnToSurface()}");
+            Assert.That(_underwaterCollider.IsActive, Is.False);
+            Assert.That(_underwaterCollider.GetComponent<CapsuleCollider>().enabled, Is.True);
+        }
+
+        [UnityTest]
+        public IEnumerator ShallowImmersion_RetainsTerrestrialColliderAndMovementState()
+        {
+            PlaceCharacter(new Vector3(0f, _testPoolSurfaceHeightMeters + 0.4f, 0f));
+
+            yield return new WaitForFixedUpdate();
+            yield return new WaitForFixedUpdate();
+
+            CharacterWaterSensor waterSensor = _underwaterCollider.GetComponent<CharacterWaterSensor>();
+            Assert.That(waterSensor.IsSufficientlyImmersed, Is.False);
+            Assert.That(_underwaterCollider.IsActive, Is.False);
+            Assert.That(_underwaterCollider.GetComponent<CapsuleCollider>().enabled, Is.True);
+        }
+
+        [Test]
+        public void TryActivate_EnablesOnlyDirectionAlignedUnderwaterCapsule()
+        {
+            CapsuleCollider uprightCollider = _underwaterCollider.GetComponent<CapsuleCollider>();
+
+            bool didActivate = _underwaterCollider.TryActivate(Vector3.forward);
+
+            Assert.That(didActivate, Is.True);
+            Assert.That(_underwaterCollider.IsActive, Is.True);
+            Assert.That(uprightCollider.enabled, Is.False);
+            Assert.That(Vector3.Dot(_underwaterCollider.AcceptedDirection, Vector3.forward), Is.GreaterThan(0.999f));
+        }
+
+        [Test]
+        public void ProductionAnimator_DoesNotConsumeRootMotion()
+        {
+            Animator animator = _playerInstance.GetComponentInChildren<Animator>(true);
+
+            Assert.That(animator.applyRootMotion, Is.False);
+        }
+
+        [Test]
+        public void UnderwaterVisualOrientation_AtSwimmingBlend_UsesAnimatedForwardAxis()
+        {
+            Assert.That(_underwaterCollider.TryActivate(Vector3.right), Is.True);
+            CharacterSwimmingVisualOrientation visualOrientation =
+                _underwaterCollider.GetComponent<CharacterSwimmingVisualOrientation>();
+
+            visualOrientation.AlignToColliderRotation(
+                _underwaterCollider.AcceptedRotation,
+                _underwaterCollider.GetComponent<Rigidbody>().rotation,
+                swimmingAnimationBlend01: 1f,
+                fixedDeltaTime: 1f);
+
+            Transform meshTransform = _underwaterCollider.transform.Find("Mesh");
+            Assert.That(Vector3.Dot(meshTransform.forward, Vector3.right), Is.GreaterThan(0.999f));
+            Assert.That(Vector3.Dot(meshTransform.up, Vector3.up), Is.GreaterThan(0.999f));
+        }
+
+        [Test]
+        public void DownwardFloorCollision_WithContinuedSwimIntent_PreservesVisualRotation()
+        {
+            PlaceCharacter(new Vector3(0f, _testPoolFloorTopHeightMeters + 1.02f, 0f));
+            Assert.That(_underwaterCollider.TryActivate(Vector3.down), Is.True);
+            CharacterSwimmingVisualOrientation visualOrientation =
+                _underwaterCollider.GetComponent<CharacterSwimmingVisualOrientation>();
+            Rigidbody characterRigidbody = _underwaterCollider.GetComponent<Rigidbody>();
+            Transform meshTransform = _underwaterCollider.transform.Find("Mesh");
+            var motionSolver = new SwimmingMotionSolver();
+
+            visualOrientation.AlignToColliderRotation(
+                _underwaterCollider.AcceptedRotation,
+                characterRigidbody.rotation,
+                swimmingAnimationBlend01: 1f,
+                fixedDeltaTime: 1f);
+            Quaternion downwardSwimmingRotation = meshTransform.localRotation;
+
+            bool didHitFloor = characterRigidbody.SweepTest(
+                Vector3.down,
+                out RaycastHit hit,
+                0.05f,
+                QueryTriggerInteraction.Ignore);
+            Vector3 collisionResolvedVelocity = motionSolver.ProjectVelocityOnCollisionPlane(
+                Vector3.down * 3f,
+                hit.normal);
+            float animationSpeedMetersPerSecond = motionSolver.MoveAnimationSpeedMetersPerSecond(
+                currentAnimationSpeedMetersPerSecond: 3f,
+                requestedDirectionMagnitude: 1f,
+                requestedSpeedMetersPerSecond: 3f,
+                accelerationMetersPerSecondSquared: 10f,
+                decelerationMetersPerSecondSquared: 8f,
+                fixedDeltaTime: Time.fixedDeltaTime);
+            characterRigidbody.linearVelocity = collisionResolvedVelocity;
+            visualOrientation.AlignToColliderRotation(
+                _underwaterCollider.AcceptedRotation,
+                characterRigidbody.rotation,
+                animationSpeedMetersPerSecond / 3f,
+                fixedDeltaTime: Time.fixedDeltaTime);
+
+            Assert.That(didHitFloor, Is.True);
+            Assert.That(hit.collider.name, Is.EqualTo("Pool Bottom"));
+            Assert.That(Vector3.Dot(_underwaterCollider.AcceptedDirection, Vector3.down), Is.GreaterThan(0.999f));
+            Assert.That(characterRigidbody.linearVelocity.magnitude, Is.LessThan(0.001f));
+            Assert.That(animationSpeedMetersPerSecond, Is.EqualTo(3f).Within(0.0001f));
+            Assert.That(Quaternion.Angle(meshTransform.localRotation, downwardSwimmingRotation), Is.LessThan(0.01f));
+        }
+
+        [UnityTest]
+        public IEnumerator SwimmingAnimation_OverMultipleCycles_DoesNotMoveModelAwayFromRoot()
+        {
+            PlaceCharacter(new Vector3(0f, _testPoolSurfaceHeightMeters - 0.5f, 0f));
+            yield return new WaitForFixedUpdate();
+            yield return new WaitForFixedUpdate();
+            yield return new WaitForFixedUpdate();
+
+            var stateDriver = _underwaterCollider.GetComponent<
+                PhysicsCharacterController.CharacterStateMachine.CharacterStateMachineDriver>();
+            stateDriver.enabled = false;
+            CharacterAnimator characterAnimator = _underwaterCollider.GetComponent<CharacterAnimator>();
+            characterAnimator.UpdateLocomotionAnimationParameter(3f);
+            Animator unityAnimator = _playerInstance.GetComponentInChildren<Animator>(true);
+            Vector3 authoredLocalPosition = unityAnimator.transform.localPosition;
+
+            yield return new WaitForSeconds(4.6f);
+
+            Assert.That(Vector3.Distance(unityAnimator.transform.localPosition, authoredLocalPosition), Is.LessThan(0.001f));
+        }
+
+        [UnityTest]
+        public IEnumerator UnderwaterSwimmingAnimation_PointsVisibleHeadAlongAcceptedDirection()
+        {
+            PlaceCharacter(new Vector3(0f, _testPoolSurfaceHeightMeters - 2f, 0f));
+            yield return new WaitForFixedUpdate();
+            yield return new WaitForFixedUpdate();
+            yield return new WaitForFixedUpdate();
+
+            var stateDriver = _underwaterCollider.GetComponent<
+                PhysicsCharacterController.CharacterStateMachine.CharacterStateMachineDriver>();
+            stateDriver.enabled = false;
+            CharacterAnimator characterAnimator = _underwaterCollider.GetComponent<CharacterAnimator>();
+            characterAnimator.UpdateLocomotionAnimationParameter(3f);
+            CharacterSwimmingVisualOrientation visualOrientation =
+                _underwaterCollider.GetComponent<CharacterSwimmingVisualOrientation>();
+            visualOrientation.AlignToColliderRotation(
+                _underwaterCollider.AcceptedRotation,
+                _underwaterCollider.GetComponent<Rigidbody>().rotation,
+                swimmingAnimationBlend01: 1f,
+                fixedDeltaTime: 1f);
+
+            yield return new WaitForSeconds(0.5f);
+
+            Animator animator = _playerInstance.GetComponentInChildren<Animator>(true);
+            Vector3 hipsToHeadDirection = (
+                animator.GetBoneTransform(HumanBodyBones.Head).position
+                - animator.GetBoneTransform(HumanBodyBones.Hips).position).normalized;
+            Assert.That(Vector3.Dot(hipsToHeadDirection, _underwaterCollider.AcceptedDirection), Is.GreaterThan(0.85f));
+            Assert.That(Vector3.Dot(hipsToHeadDirection, Vector3.down), Is.LessThan(0.5f));
+        }
+
+        [UnityTest]
+        public IEnumerator LeavingWaterVolume_ClearsSwimmingAndRestoresUprightCollider()
+        {
+            Transform meshTransform = _underwaterCollider.transform.Find("Mesh");
+            Quaternion authoredLocalRotation = meshTransform.localRotation;
+            PlaceCharacter(new Vector3(0f, _testPoolSurfaceHeightMeters - 2f, 0f));
+            yield return new WaitForFixedUpdate();
+            yield return new WaitForFixedUpdate();
+            yield return new WaitForFixedUpdate();
+            Assert.That(_underwaterCollider.IsActive, Is.True);
+
+            PlaceCharacter(new Vector3(20f, _testPoolSurfaceHeightMeters - 2f, 0f));
+            yield return new WaitForFixedUpdate();
+            yield return new WaitForFixedUpdate();
+            yield return new WaitForFixedUpdate();
+
+            CharacterWaterSensor waterSensor = _underwaterCollider.GetComponent<CharacterWaterSensor>();
+            Assert.That(waterSensor.HasWaterVolume, Is.False);
+            Assert.That(waterSensor.IsSufficientlyImmersed, Is.False);
+            Assert.That(_underwaterCollider.IsActive, Is.False);
+            Assert.That(_underwaterCollider.GetComponent<CapsuleCollider>().enabled, Is.True);
+            Assert.That(_underwaterCollider.GetComponent<BaseCharacterInput>().AreTerrestrialActionsEnabled, Is.True);
+            Assert.That(Quaternion.Angle(meshTransform.localRotation, authoredLocalRotation), Is.LessThan(0.1f));
+        }
+
+        [UnityTest]
+        public IEnumerator HorizontalUnderwaterExit_PreservesSwimmingWorldHeadingDuringUprightHandoff()
+        {
+            PlaceCharacter(new Vector3(0f, _testPoolSurfaceHeightMeters - 2f, 0f));
+            yield return new WaitForFixedUpdate();
+            yield return new WaitForFixedUpdate();
+            yield return new WaitForFixedUpdate();
+            Assert.That(_underwaterCollider.IsActive, Is.True);
+
+            Rigidbody characterRigidbody = _underwaterCollider.GetComponent<Rigidbody>();
+            Vector3 swimmingDirection = characterRigidbody.rotation * Vector3.right;
+            Assert.That(_underwaterCollider.TryAlign(swimmingDirection, 1f, 360f), Is.True);
+            CharacterSwimmingVisualOrientation visualOrientation =
+                _underwaterCollider.GetComponent<CharacterSwimmingVisualOrientation>();
+            visualOrientation.AlignToColliderRotation(
+                _underwaterCollider.AcceptedRotation,
+                characterRigidbody.rotation,
+                swimmingAnimationBlend01: 1f,
+                fixedDeltaTime: 1f);
+
+            PlaceCharacter(new Vector3(20f, _testPoolSurfaceHeightMeters - 2f, 0f));
+            yield return new WaitForFixedUpdate();
+            yield return new WaitForFixedUpdate();
+
+            Transform meshTransform = _underwaterCollider.transform.Find("Mesh");
+            Vector3 uprightWorldHeading = Vector3.ProjectOnPlane(meshTransform.forward, Vector3.up).normalized;
+            Assert.That(_underwaterCollider.IsActive, Is.False);
+            Assert.That(Vector3.Dot(characterRigidbody.rotation * Vector3.forward, swimmingDirection), Is.GreaterThan(0.999f));
+            Assert.That(Vector3.Dot(uprightWorldHeading, swimmingDirection), Is.GreaterThan(0.999f));
+        }
+
+        [UnityTest]
+        public IEnumerator UnderwaterToSurface_PreservesWorldPoseDuringHeadingHandoff()
+        {
+            PlaceCharacter(new Vector3(0f, _testPoolSurfaceHeightMeters - 2f, 0f));
+            yield return new WaitForFixedUpdate();
+            yield return new WaitForFixedUpdate();
+            yield return new WaitForFixedUpdate();
+            Assert.That(_underwaterCollider.IsActive, Is.True);
+
+            Rigidbody characterRigidbody = _underwaterCollider.GetComponent<Rigidbody>();
+            Vector3 horizontalHeading = characterRigidbody.rotation * Vector3.right;
+            Vector3 ascendingSwimmingDirection = (horizontalHeading + Vector3.up).normalized;
+            Assert.That(_underwaterCollider.TryAlign(ascendingSwimmingDirection, 1f, 360f), Is.True);
+            CharacterSwimmingVisualOrientation visualOrientation =
+                _underwaterCollider.GetComponent<CharacterSwimmingVisualOrientation>();
+            Transform meshTransform = _underwaterCollider.transform.Find("Mesh");
+            Quaternion authoredMeshLocalRotation = meshTransform.localRotation;
+            visualOrientation.AlignToColliderRotation(
+                _underwaterCollider.AcceptedRotation,
+                characterRigidbody.rotation,
+                swimmingAnimationBlend01: 1f,
+                fixedDeltaTime: 1f);
+            Quaternion underwaterWorldRotation = meshTransform.rotation;
+
+            CharacterSwimmingMovement swimmingMovement = _underwaterCollider.GetComponent<CharacterSwimmingMovement>();
+            PlaceCharacter(new Vector3(0f, swimmingMovement.SurfaceTargetRootHeightMeters, 0f));
+            yield return new WaitForFixedUpdate();
+
+            CharacterAnimator animator = _underwaterCollider.GetComponent<CharacterAnimator>();
+            Assert.That(_underwaterCollider.IsActive, Is.False);
+            Assert.That(animator.CurrentTag.name, Is.EqualTo("Surface Swimming State"));
+            Quaternion uprightWorldRotation = characterRigidbody.rotation * authoredMeshLocalRotation;
+            float underwaterToUprightAngle = Quaternion.Angle(underwaterWorldRotation, uprightWorldRotation);
+            float recoveredToUprightAngle = Quaternion.Angle(meshTransform.rotation, uprightWorldRotation);
+            Assert.That(Vector3.Dot(characterRigidbody.rotation * Vector3.forward, horizontalHeading), Is.GreaterThan(0.999f));
+            Assert.That(recoveredToUprightAngle, Is.LessThan(underwaterToUprightAngle));
+        }
+
+        [Test]
+        public void TryDeactivate_UnderProductionOverhang_RemainsUnderwater()
+        {
+            PlaceCharacter(new Vector3(3f, TEST_POOL_ROOT_HEIGHT_METERS - 1.4f, -1f));
+            Assert.That(_underwaterCollider.TryActivate(Vector3.forward), Is.True);
+
+            bool didDeactivate = _underwaterCollider.TryDeactivate();
+
+            Assert.That(didDeactivate, Is.False);
+            Assert.That(_underwaterCollider.IsActive, Is.True);
+        }
+
+        [Test]
+        public void TryDeactivate_InClearWater_RestoresOnlyUprightCapsule()
+        {
+            CapsuleCollider uprightCollider = _underwaterCollider.GetComponent<CapsuleCollider>();
+            Assert.That(_underwaterCollider.TryActivate(Vector3.forward), Is.True);
+
+            bool didDeactivate = _underwaterCollider.TryDeactivate();
+
+            Assert.That(didDeactivate, Is.True);
+            Assert.That(_underwaterCollider.IsActive, Is.False);
+            Assert.That(uprightCollider.enabled, Is.True);
+        }
+
+        [Test]
+        public void TryAlign_TowardSubmergedWall_RetainsLastCollisionSafeDirection()
+        {
+            PlaceCharacter(new Vector3(-1.25f, TEST_POOL_ROOT_HEIGHT_METERS - 2f, 0f));
+            Assert.That(_underwaterCollider.TryActivate(Vector3.forward), Is.True);
+            Vector3 previousDirection = _underwaterCollider.AcceptedDirection;
+
+            bool didAlign = _underwaterCollider.TryAlign(Vector3.left, 1f, 360f);
+
+            Assert.That(didAlign, Is.False);
+            Assert.That(Vector3.Dot(_underwaterCollider.AcceptedDirection, previousDirection), Is.GreaterThan(0.999f));
+        }
+
+        [Test]
+        public void HorizontalCapsuleSweep_DetectsThinWallBeyondUprightRadius()
+        {
+            PlaceCharacter(new Vector3(-1.25f, TEST_POOL_ROOT_HEIGHT_METERS - 2f, 0f));
+            Assert.That(_underwaterCollider.TryActivate(Vector3.forward), Is.True);
+            Rigidbody characterRigidbody = _underwaterCollider.GetComponent<Rigidbody>();
+
+            bool didHit = characterRigidbody.SweepTest(
+                Vector3.left,
+                out RaycastHit hit,
+                1f,
+                QueryTriggerInteraction.Ignore);
+
+            Assert.That(didHit, Is.True);
+            Assert.That(hit.collider.name, Is.EqualTo("Submerged Thin Wall"));
+            Assert.That(hit.distance, Is.LessThan(0.3f));
+        }
+
+        private void PlaceCharacter(Vector3 worldPosition)
+        {
+            _underwaterCollider.transform.position = worldPosition;
+            _underwaterCollider.GetComponent<Rigidbody>().linearVelocity = Vector3.zero;
+            Physics.SyncTransforms();
+        }
+
+        private static void ReleaseAddressableAsset(AsyncOperationHandle<GameObject> handle)
+        {
+            UnityEngine.AddressableAssets.Addressables.Release(handle);
+        }
+    }
+}

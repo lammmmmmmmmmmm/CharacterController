@@ -18,17 +18,25 @@ namespace PhysicsCharacterController.CharacterStateMachine
         [SerializeField] private CharacterJump _characterJump;
         [SerializeField] private CharacterGravity _characterGravity;
         [SerializeField] private GroundChecker _groundChecker;
+        [SerializeField] private BaseCharacterInput _input;
+        [SerializeField] private CharacterRotation _characterRotation;
+        [SerializeField] private CharacterWaterSensor _waterSensor;
+        [SerializeField] private CharacterSwimmingMovement _swimmingMovement;
         [SerializeField] private CharacterAnimator _characterAnimator;
 
         [Header("Animation Data")]
         [SerializeField] private LocomotionAnimationDataSO _standingAnimationData;
         [SerializeField] private LocomotionAnimationDataSO _crouchingAnimationData;
         [SerializeField] private AirborneAnimationDataSO _airborneAnimationData;
+        [SerializeField] private LocomotionAnimationDataSO _surfaceSwimmingAnimationData;
+        [SerializeField] private LocomotionAnimationDataSO _underwaterSwimmingAnimationData;
 
         [Header("State Ids")]
         [SerializeField] private StateId _standingStateId;
         [SerializeField] private StateId _crouchingStateId;
         [SerializeField] private StateId _airborneStateId;
+        [SerializeField] private StateId _surfaceSwimmingStateId;
+        [SerializeField] private StateId _underwaterSwimmingStateId;
 
         [Header("Debug")]
         [SerializeField] private bool _logActiveStatePath;
@@ -45,6 +53,10 @@ namespace PhysicsCharacterController.CharacterStateMachine
             _characterJump = GetComponent<CharacterJump>();
             _characterGravity = GetComponent<CharacterGravity>();
             _groundChecker = GetComponent<GroundChecker>();
+            _input = GetComponent<BaseCharacterInput>();
+            _characterRotation = GetComponent<CharacterRotation>();
+            _waterSensor = GetComponent<CharacterWaterSensor>();
+            _swimmingMovement = GetComponent<CharacterSwimmingMovement>();
         }
 
         private void Awake()
@@ -55,13 +67,21 @@ namespace PhysicsCharacterController.CharacterStateMachine
                 _characterJump,
                 _characterGravity,
                 _groundChecker,
+                _input,
+                _characterRotation,
+                _waterSensor,
+                _swimmingMovement,
                 _characterAnimator,
                 _standingAnimationData,
                 _crouchingAnimationData,
                 _airborneAnimationData,
+                _surfaceSwimmingAnimationData,
+                _underwaterSwimmingAnimationData,
                 _standingStateId,
                 _crouchingStateId,
-                _airborneStateId);
+                _airborneStateId,
+                _surfaceSwimmingStateId,
+                _underwaterSwimmingStateId);
 
             _root = new CharacterRootState(null, _context);
             _machine = new StateMachineBuilder(_root).Build();

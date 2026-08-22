@@ -31,12 +31,12 @@ namespace PhysicsCharacterController.CharacterStateMachine.States
         {
             if (_context.CharacterJump.TryExecuteJump())
             {
-                return ((CharacterRootState)Parent).Airborne;
+                return ((CharacterTerrestrialState)Parent).Airborne;
             }
 
             if (!_context.IsGrounded)
             {
-                return ((CharacterRootState)Parent).Airborne;
+                return ((CharacterTerrestrialState)Parent).Airborne;
             }
 
             return null;

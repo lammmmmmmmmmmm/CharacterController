@@ -15,8 +15,11 @@ namespace PhysicsCharacterController
 		public event Action<bool> OnSprint;
 		public event Action<bool> OnCrouch;
 		public event Action<bool> OnNormalActionsAvailabilityChanged;
+		public event Action<bool> OnTerrestrialActionsAvailabilityChanged;
 
 		public bool AreNormalActionsEnabled { get; private set; } = true;
+		public bool AreTerrestrialActionsEnabled { get; private set; } = true;
+		public bool IsSprintRequested { get; private set; }
 
 		public abstract Vector2 GetMoveInput();
 		public abstract float GetMoveAngle();
@@ -42,15 +45,49 @@ namespace PhysicsCharacterController
 			OnNormalActionsAvailabilityChanged?.Invoke(areEnabled);
 		}
 
+		public void SetTerrestrialActionsEnabled(bool areEnabled)
+		{
+			if (AreTerrestrialActionsEnabled == areEnabled)
+			{
+				return;
+			}
+
+			AreTerrestrialActionsEnabled = areEnabled;
+			if (!areEnabled)
+			{
+				InvokeCrouch(false);
+			}
+
+			OnTerrestrialActionsAvailabilityChanged?.Invoke(areEnabled);
+		}
+
 		#endregion
 
 		#region Protected Methods
 
 		protected void InvokeMoveStart(Vector2 value) => OnMoveStart?.Invoke(value);
 		protected void InvokeMoveStop() => OnMoveStop?.Invoke();
-		protected void InvokeJumpPressed() => OnJumpPressed?.Invoke();
-		protected void InvokeSprint(bool active) => OnSprint?.Invoke(active);
-		protected void InvokeCrouch(bool active) => OnCrouch?.Invoke(active);
+		protected void InvokeJumpPressed()
+		{
+			if (AreTerrestrialActionsEnabled)
+			{
+				OnJumpPressed?.Invoke();
+			}
+		}
+
+		protected void InvokeSprint(bool active)
+		{
+			IsSprintRequested = active;
+			OnSprint?.Invoke(active);
+		}
+
+		protected void InvokeCrouch(bool active)
+		{
+			if (AreTerrestrialActionsEnabled || !active)
+			{
+				OnCrouch?.Invoke(active);
+			}
+		}
 
 		#endregion
 	}

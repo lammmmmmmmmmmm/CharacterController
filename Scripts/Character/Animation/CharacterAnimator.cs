@@ -31,6 +31,7 @@ namespace PhysicsCharacterController
         private void Awake()
         {
             InitializeAnimationChannels();
+            DisableAnimationRootMotion();
         }
 
         private void OnEnable()
@@ -192,6 +193,11 @@ namespace PhysicsCharacterController
                 AnimancerLayer layer = _animancer.Layers[animationChannelSO.LayerIndex];
                 _animationChannels.Add(animationChannelSO, new AnimationLayerChannel(animationChannelSO, layer));
             }
+        }
+
+        private void DisableAnimationRootMotion()
+        {
+            _animancer.Animator.applyRootMotion = false;
         }
 
         private bool TryGetAnimationChannel(AnimationChannelSO animationChannelSO, out AnimationLayerChannel animationChannel)
