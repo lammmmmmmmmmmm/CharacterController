@@ -12,6 +12,9 @@ namespace PhysicsCharacterController
     public abstract class CharacterColliderShape : MonoBehaviour
     {
         private float _originalBottomOffsetMeters;
+        private float _requestedHeightMeters;
+        private float _heightOverrideMeters;
+        private bool _hasHeightOverride;
 
         public abstract Collider PhysicsCollider { get; }
         public abstract float HeightMeters { get; }
@@ -30,6 +33,7 @@ namespace PhysicsCharacterController
             RefreshColliderCache();
             OriginalHeightMeters = HeightMeters;
             _originalBottomOffsetMeters = Center.y - OriginalHeightMeters * 0.5f;
+            _requestedHeightMeters = OriginalHeightMeters;
         }
 
         #endregion
@@ -38,8 +42,27 @@ namespace PhysicsCharacterController
 
         public void SetHeightPreservingBottom(float heightMeters)
         {
-            float centerYMeters = _originalBottomOffsetMeters + heightMeters * 0.5f;
-            SetHeightAndCenter(heightMeters, new Vector3(Center.x, centerYMeters, Center.z));
+            _requestedHeightMeters = heightMeters;
+            float effectiveHeightMeters = _hasHeightOverride ? _heightOverrideMeters : heightMeters;
+            ApplyHeightPreservingBottom(effectiveHeightMeters);
+        }
+
+        public void SetHeightOverridePreservingBottom(float heightMeters)
+        {
+            _heightOverrideMeters = heightMeters;
+            _hasHeightOverride = true;
+            ApplyHeightPreservingBottom(heightMeters);
+        }
+
+        public void ClearHeightOverride()
+        {
+            if (!_hasHeightOverride)
+            {
+                return;
+            }
+
+            _hasHeightOverride = false;
+            ApplyHeightPreservingBottom(_requestedHeightMeters);
         }
 
         public void SetPhysicsEnabled(bool isEnabled)
@@ -76,6 +99,12 @@ namespace PhysicsCharacterController
         #endregion
 
         #region Private Methods
+
+        private void ApplyHeightPreservingBottom(float heightMeters)
+        {
+            float centerYMeters = _originalBottomOffsetMeters + heightMeters * 0.5f;
+            SetHeightAndCenter(heightMeters, new Vector3(Center.x, centerYMeters, Center.z));
+        }
 
         protected abstract void CacheCollider();
         protected abstract void SetHeightAndCenter(float heightMeters, Vector3 center);
