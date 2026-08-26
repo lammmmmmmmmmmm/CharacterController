@@ -85,7 +85,7 @@ namespace PhysicsCharacterController.Tests.PlayMode
                 $"surface={waterSensor.WaterSurfaceHeightMeters}, target={swimmingMovement.SurfaceTargetRootHeightMeters}, " +
                 $"shouldDive={swimmingMovement.ShouldDive()}, shouldReturn={swimmingMovement.ShouldReturnToSurface()}");
             Assert.That(_underwaterCollider.IsActive, Is.False);
-            Assert.That(_underwaterCollider.GetComponent<CapsuleCollider>().enabled, Is.True);
+            Assert.That(_underwaterCollider.GetComponent<CharacterColliderShape>().IsPhysicsEnabled, Is.True);
         }
 
         [UnityTest]
@@ -99,19 +99,21 @@ namespace PhysicsCharacterController.Tests.PlayMode
             CharacterWaterSensor waterSensor = _underwaterCollider.GetComponent<CharacterWaterSensor>();
             Assert.That(waterSensor.IsSufficientlyImmersed, Is.False);
             Assert.That(_underwaterCollider.IsActive, Is.False);
-            Assert.That(_underwaterCollider.GetComponent<CapsuleCollider>().enabled, Is.True);
+            Assert.That(_underwaterCollider.GetComponent<CharacterColliderShape>().IsPhysicsEnabled, Is.True);
         }
 
         [Test]
-        public void TryActivate_EnablesOnlyDirectionAlignedUnderwaterCapsule()
+        public void TryActivate_EnablesOnlyDirectionAlignedUnderwaterColliderShape()
         {
-            CapsuleCollider uprightCollider = _underwaterCollider.GetComponent<CapsuleCollider>();
+            CharacterColliderShape uprightCollider = _underwaterCollider.GetComponent<CharacterColliderShape>();
+            CharacterColliderShape[] colliderShapes = _underwaterCollider.GetComponentsInChildren<CharacterColliderShape>(true);
 
             bool didActivate = _underwaterCollider.TryActivate(Vector3.forward);
 
             Assert.That(didActivate, Is.True);
             Assert.That(_underwaterCollider.IsActive, Is.True);
-            Assert.That(uprightCollider.enabled, Is.False);
+            Assert.That(uprightCollider.IsPhysicsEnabled, Is.False);
+            Assert.That(CountEnabledColliderShapes(colliderShapes), Is.EqualTo(1));
             Assert.That(Vector3.Dot(_underwaterCollider.AcceptedDirection, Vector3.forward), Is.GreaterThan(0.999f));
         }
 
@@ -203,6 +205,7 @@ namespace PhysicsCharacterController.Tests.PlayMode
             CharacterAnimator characterAnimator = _underwaterCollider.GetComponent<CharacterAnimator>();
             characterAnimator.UpdateLocomotionAnimationParameter(3f);
             Animator unityAnimator = _playerInstance.GetComponentInChildren<Animator>(true);
+            unityAnimator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
             Vector3 authoredLocalPosition = unityAnimator.transform.localPosition;
 
             yield return new WaitForSeconds(4.6f);
@@ -222,6 +225,8 @@ namespace PhysicsCharacterController.Tests.PlayMode
                 PhysicsCharacterController.CharacterStateMachine.CharacterStateMachineDriver>();
             stateDriver.enabled = false;
             CharacterAnimator characterAnimator = _underwaterCollider.GetComponent<CharacterAnimator>();
+            Animator animator = _playerInstance.GetComponentInChildren<Animator>(true);
+            animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
             characterAnimator.UpdateLocomotionAnimationParameter(3f);
             CharacterSwimmingVisualOrientation visualOrientation =
                 _underwaterCollider.GetComponent<CharacterSwimmingVisualOrientation>();
@@ -233,7 +238,6 @@ namespace PhysicsCharacterController.Tests.PlayMode
 
             yield return new WaitForSeconds(0.5f);
 
-            Animator animator = _playerInstance.GetComponentInChildren<Animator>(true);
             Vector3 hipsToHeadDirection = (
                 animator.GetBoneTransform(HumanBodyBones.Head).position
                 - animator.GetBoneTransform(HumanBodyBones.Hips).position).normalized;
@@ -261,7 +265,7 @@ namespace PhysicsCharacterController.Tests.PlayMode
             Assert.That(waterSensor.HasWaterVolume, Is.False);
             Assert.That(waterSensor.IsSufficientlyImmersed, Is.False);
             Assert.That(_underwaterCollider.IsActive, Is.False);
-            Assert.That(_underwaterCollider.GetComponent<CapsuleCollider>().enabled, Is.True);
+            Assert.That(_underwaterCollider.GetComponent<CharacterColliderShape>().IsPhysicsEnabled, Is.True);
             Assert.That(_underwaterCollider.GetComponent<BaseCharacterInput>().AreTerrestrialActionsEnabled, Is.True);
             Assert.That(Quaternion.Angle(meshTransform.localRotation, authoredLocalRotation), Is.LessThan(0.1f));
         }
@@ -348,16 +352,16 @@ namespace PhysicsCharacterController.Tests.PlayMode
         }
 
         [Test]
-        public void TryDeactivate_InClearWater_RestoresOnlyUprightCapsule()
+        public void TryDeactivate_InClearWater_RestoresOnlyUprightColliderShape()
         {
-            CapsuleCollider uprightCollider = _underwaterCollider.GetComponent<CapsuleCollider>();
+            CharacterColliderShape uprightCollider = _underwaterCollider.GetComponent<CharacterColliderShape>();
             Assert.That(_underwaterCollider.TryActivate(Vector3.forward), Is.True);
 
             bool didDeactivate = _underwaterCollider.TryDeactivate();
 
             Assert.That(didDeactivate, Is.True);
             Assert.That(_underwaterCollider.IsActive, Is.False);
-            Assert.That(uprightCollider.enabled, Is.True);
+            Assert.That(uprightCollider.IsPhysicsEnabled, Is.True);
         }
 
         [Test]
@@ -396,6 +400,20 @@ namespace PhysicsCharacterController.Tests.PlayMode
             _underwaterCollider.transform.position = worldPosition;
             _underwaterCollider.GetComponent<Rigidbody>().linearVelocity = Vector3.zero;
             Physics.SyncTransforms();
+        }
+
+        private static int CountEnabledColliderShapes(CharacterColliderShape[] colliderShapes)
+        {
+            int enabledColliderCount = 0;
+            foreach (CharacterColliderShape colliderShape in colliderShapes)
+            {
+                if (colliderShape.IsPhysicsEnabled)
+                {
+                    enabledColliderCount++;
+                }
+            }
+
+            return enabledColliderCount;
         }
 
         private static void ReleaseAddressableAsset(AsyncOperationHandle<GameObject> handle)

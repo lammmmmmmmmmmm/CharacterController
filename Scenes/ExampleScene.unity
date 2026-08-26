@@ -10073,14 +10073,6 @@ PrefabInstance:
       propertyPath: _touchLookInput
       value: 
       objectReference: {fileID: 8426860329496925151}
-    - target: {fileID: 3092909172582380172, guid: c47a17ba764f3ef4db5fff99e93df6c6, type: 3}
-      propertyPath: _uprightRotationSharpness
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 3092909172582380172, guid: c47a17ba764f3ef4db5fff99e93df6c6, type: 3}
-      propertyPath: _swimmingRotationSharpness
-      value: 1
-      objectReference: {fileID: 0}
     - target: {fileID: 3139864714966188544, guid: c47a17ba764f3ef4db5fff99e93df6c6, type: 3}
       propertyPath: CollideAgainst.m_Bits
       value: 9

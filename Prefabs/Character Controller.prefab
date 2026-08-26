@@ -469,7 +469,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: PhysicsCharacterController.Runtime::PhysicsCharacterController.CharacterWaterSensor
   _characterColliderShape: {fileID: 1759215851550013945}
-  _standingCollider: {fileID: 1667933343544081482}
   _settingsSO: {fileID: 11400000, guid: 618ab0b01f7266245abf87f1ad120688, type: 2}
   _waterVolumeMask:
     serializedVersion: 2
@@ -505,9 +504,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4becacc1eb8ffd64aac060c20fe25403, type: 3}
   m_Name: 
   m_EditorClassIdentifier: PhysicsCharacterController.Runtime::PhysicsCharacterController.UnderwaterSwimmingCollider
-  _uprightCollider: {fileID: 1667933343544081482}
+  _uprightCollider: {fileID: 1759215851550013945}
   _underwaterColliderPivot: {fileID: 1134335504071550976}
-  _underwaterCollider: {fileID: 5062252309096857855}
+  _underwaterCollider: {fileID: 2158423678515387218}
   _swimmingPhysicsMaterial: {fileID: 13400000, guid: 1bf6cd3ce29c82f4eba0bfdd855d4b09, type: 2}
   _solidCollisionMask:
     serializedVersion: 2
@@ -526,6 +525,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: PhysicsCharacterController.Runtime::PhysicsCharacterController.CharacterSwimmingVisualOrientation
   _meshTransform: {fileID: 3564097700261540322}
+  _swimmingRotationSharpness: 8
+  _uprightRotationSharpness: 6
 --- !u!1 &5891816821523033180
 GameObject:
   m_ObjectHideFlags: 0
@@ -536,6 +537,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1134335504071550976}
   - component: {fileID: 5062252309096857855}
+  - component: {fileID: 2158423678515387218}
   m_Layer: 0
   m_Name: Underwater Collider Pivot
   m_TagString: Untagged
@@ -581,6 +583,18 @@ CapsuleCollider:
   m_Height: 2
   m_Direction: 2
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &2158423678515387218
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5891816821523033180}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6974f6a56caf2444f9dfda8d65b42b9b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: PhysicsCharacterController.Runtime::PhysicsCharacterController.CharacterCapsuleColliderShape
 --- !u!1001 &3813759627713680846
 PrefabInstance:
   m_ObjectHideFlags: 0

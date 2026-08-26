@@ -10,11 +10,38 @@ namespace PhysicsCharacterController
     [RequireComponent(typeof(BoxCollider))]
     public sealed class CharacterBoxColliderShape : CharacterColliderShape
     {
+        private readonly BoxColliderGeometryCalculator _geometryCalculator = new();
         private BoxCollider _boxCollider;
 
         public override Collider PhysicsCollider => _boxCollider;
         public override float HeightMeters => _boxCollider.size.y;
         public override Vector3 Center => _boxCollider.center;
+
+        #region Public Methods
+
+        public override int OverlapAtPoseNonAlloc(
+            Vector3 worldPosition,
+            Quaternion worldRotation,
+            Collider[] overlapResults,
+            LayerMask collisionMask,
+            QueryTriggerInteraction queryTriggerInteraction)
+        {
+            BoxColliderGeometry geometry = _geometryCalculator.Calculate(
+                worldPosition,
+                worldRotation,
+                _boxCollider.transform.lossyScale,
+                _boxCollider.center,
+                _boxCollider.size);
+            return Physics.OverlapBoxNonAlloc(
+                geometry.Center,
+                geometry.HalfExtentsMeters,
+                overlapResults,
+                geometry.Rotation,
+                collisionMask,
+                queryTriggerInteraction);
+        }
+
+        #endregion
 
         #region Private Methods
 

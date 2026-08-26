@@ -2,13 +2,13 @@ using UnityEngine;
 
 namespace PhysicsCharacterController
 {
-    public readonly struct SwimmingCapsuleGeometry
+    public readonly struct CapsuleColliderGeometry
     {
         public Vector3 PointA { get; }
         public Vector3 PointB { get; }
         public float RadiusMeters { get; }
 
-        public SwimmingCapsuleGeometry(Vector3 pointA, Vector3 pointB, float radiusMeters)
+        public CapsuleColliderGeometry(Vector3 pointA, Vector3 pointB, float radiusMeters)
         {
             PointA = pointA;
             PointB = pointB;
@@ -16,9 +16,9 @@ namespace PhysicsCharacterController
         }
     }
 
-    public sealed class SwimmingCapsuleGeometryCalculator
+    public sealed class CapsuleColliderGeometryCalculator
     {
-        public SwimmingCapsuleGeometry Calculate(
+        public CapsuleColliderGeometry Calculate(
             Vector3 colliderPosition,
             Quaternion colliderRotation,
             Vector3 colliderScale,
@@ -36,7 +36,7 @@ namespace PhysicsCharacterController
             Vector3 worldCenter = colliderPosition + colliderRotation * Vector3.Scale(localCenter, colliderScale);
             Vector3 worldAxis = colliderRotation * localAxis;
 
-            return new SwimmingCapsuleGeometry(
+            return new CapsuleColliderGeometry(
                 worldCenter + worldAxis * halfSegmentLengthMeters,
                 worldCenter - worldAxis * halfSegmentLengthMeters,
                 worldRadiusMeters);

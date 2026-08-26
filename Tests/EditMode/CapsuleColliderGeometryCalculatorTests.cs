@@ -4,14 +4,14 @@ using UnityEngine.TestTools.Utils;
 
 namespace PhysicsCharacterController.Tests
 {
-    public sealed class SwimmingCapsuleGeometryCalculatorTests
+    public sealed class CapsuleColliderGeometryCalculatorTests
     {
-        private SwimmingCapsuleGeometryCalculator _calculator;
+        private CapsuleColliderGeometryCalculator _calculator;
 
         [SetUp]
         public void SetUp()
         {
-            _calculator = new SwimmingCapsuleGeometryCalculator();
+            _calculator = new CapsuleColliderGeometryCalculator();
         }
 
         [TearDown]
@@ -23,7 +23,7 @@ namespace PhysicsCharacterController.Tests
         [Test]
         public void Calculate_WithForwardCapsule_ProducesHorizontalEndpoints()
         {
-            SwimmingCapsuleGeometry geometry = _calculator.Calculate(
+            CapsuleColliderGeometry geometry = _calculator.Calculate(
                 Vector3.zero,
                 Quaternion.identity,
                 Vector3.one,
@@ -42,7 +42,7 @@ namespace PhysicsCharacterController.Tests
         {
             Quaternion rotation = Quaternion.FromToRotation(Vector3.forward, Vector3.up);
 
-            SwimmingCapsuleGeometry geometry = _calculator.Calculate(
+            CapsuleColliderGeometry geometry = _calculator.Calculate(
                 Vector3.zero,
                 rotation,
                 Vector3.one,
@@ -58,7 +58,7 @@ namespace PhysicsCharacterController.Tests
         [Test]
         public void Calculate_WithPerpendicularScale_UsesLargestRadiusScale()
         {
-            SwimmingCapsuleGeometry geometry = _calculator.Calculate(
+            CapsuleColliderGeometry geometry = _calculator.Calculate(
                 Vector3.zero,
                 Quaternion.identity,
                 new Vector3(2f, 3f, 1f),
@@ -75,7 +75,7 @@ namespace PhysicsCharacterController.Tests
         [Test]
         public void Calculate_WithInvalidDirectionAxis_FallsBackToVerticalCapsule()
         {
-            SwimmingCapsuleGeometry geometry = _calculator.Calculate(
+            CapsuleColliderGeometry geometry = _calculator.Calculate(
                 Vector3.zero,
                 Quaternion.identity,
                 Vector3.one,

@@ -10,14 +10,12 @@ namespace PhysicsCharacterController
 
         [Header("Dependencies")]
         [SerializeField] private CharacterColliderShape _characterColliderShape;
-        [SerializeField] private CapsuleCollider _standingCollider;
         [SerializeField] private SwimmingMovementSettingsSO _settingsSO;
 
         [Header("Detection")]
         [SerializeField] private LayerMask _waterVolumeMask = 1 << 4;
 
         private readonly Collider[] _waterOverlapResults = new Collider[MAX_WATER_OVERLAP_COUNT];
-        private readonly SwimmingCapsuleGeometryCalculator _geometryCalculator = new();
         private readonly SwimmingStateResolver _stateResolver = new();
         private WaterVolume _activeWaterVolume;
 
@@ -69,27 +67,12 @@ namespace PhysicsCharacterController
             WaterVolume selectedVolume = null;
             float selectedSurfaceHeightMeters = float.NegativeInfinity;
 
-            SwimmingCapsuleGeometry standingGeometry = _geometryCalculator.Calculate(
-                _standingCollider.transform.position,
-                _standingCollider.transform.rotation,
-                _standingCollider.transform.lossyScale,
-                _standingCollider.center,
-                _standingCollider.height,
-                _standingCollider.radius,
-                _standingCollider.direction);
-            int overlapCount = Physics.OverlapCapsuleNonAlloc(
-                standingGeometry.PointA,
-                standingGeometry.PointB,
-                standingGeometry.RadiusMeters,
-                _waterOverlapResults,
-                _waterVolumeMask,
-                QueryTriggerInteraction.Collide);
+            int overlapCount = _characterColliderShape.OverlapNonAlloc(_waterOverlapResults, _waterVolumeMask, QueryTriggerInteraction.Collide);
 
             for (int overlapIndex = 0; overlapIndex < overlapCount; overlapIndex++)
             {
                 Collider waterCollider = _waterOverlapResults[overlapIndex];
-                if (!waterCollider.TryGetComponent(out WaterVolume waterVolume)
-                    || waterVolume.SurfaceHeightMeters <= selectedSurfaceHeightMeters)
+                if (!waterCollider.TryGetComponent(out WaterVolume waterVolume) || waterVolume.SurfaceHeightMeters <= selectedSurfaceHeightMeters)
                 {
                     continue;
                 }
@@ -100,9 +83,7 @@ namespace PhysicsCharacterController
 
             if (overlapCount == MAX_WATER_OVERLAP_COUNT)
             {
-                Debug.LogWarning(
-                    $"Water detection for '{name}' filled the overlap buffer; the highest detected surface is used.",
-                    this);
+                Debug.LogWarning($"Water detection for '{name}' filled the overlap buffer; the highest detected surface is used.", this);
             }
 
             return selectedVolume;

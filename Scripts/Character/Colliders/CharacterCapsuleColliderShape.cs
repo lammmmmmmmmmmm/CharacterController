@@ -10,11 +10,40 @@ namespace PhysicsCharacterController
     [RequireComponent(typeof(CapsuleCollider))]
     public sealed class CharacterCapsuleColliderShape : CharacterColliderShape
     {
+        private readonly CapsuleColliderGeometryCalculator _geometryCalculator = new();
         private CapsuleCollider _capsuleCollider;
 
         public override Collider PhysicsCollider => _capsuleCollider;
         public override float HeightMeters => _capsuleCollider.height;
         public override Vector3 Center => _capsuleCollider.center;
+
+        #region Public Methods
+
+        public override int OverlapAtPoseNonAlloc(
+            Vector3 worldPosition,
+            Quaternion worldRotation,
+            Collider[] overlapResults,
+            LayerMask collisionMask,
+            QueryTriggerInteraction queryTriggerInteraction)
+        {
+            CapsuleColliderGeometry geometry = _geometryCalculator.Calculate(
+                worldPosition,
+                worldRotation,
+                _capsuleCollider.transform.lossyScale,
+                _capsuleCollider.center,
+                _capsuleCollider.height,
+                _capsuleCollider.radius,
+                _capsuleCollider.direction);
+            return Physics.OverlapCapsuleNonAlloc(
+                geometry.PointA,
+                geometry.PointB,
+                geometry.RadiusMeters,
+                overlapResults,
+                collisionMask,
+                queryTriggerInteraction);
+        }
+
+        #endregion
 
         #region Private Methods
 

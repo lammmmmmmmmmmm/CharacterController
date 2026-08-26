@@ -7,6 +7,7 @@ namespace PhysicsCharacterController
     /// Concrete shape components translate these measurements to a specific Unity collider while
     /// keeping the collider's original bottom position fixed during height changes.
     /// </summary>
+    [DefaultExecutionOrder(-100)]
     [DisallowMultipleComponent]
     public abstract class CharacterColliderShape : MonoBehaviour
     {
@@ -15,6 +16,7 @@ namespace PhysicsCharacterController
         public abstract Collider PhysicsCollider { get; }
         public abstract float HeightMeters { get; }
         public abstract Vector3 Center { get; }
+        public bool IsPhysicsEnabled => PhysicsCollider.enabled;
 
         public float OriginalHeightMeters { get; private set; }
         public float OriginalTopOffsetMeters => _originalBottomOffsetMeters + OriginalHeightMeters;
@@ -39,6 +41,28 @@ namespace PhysicsCharacterController
             float centerYMeters = _originalBottomOffsetMeters + heightMeters * 0.5f;
             SetHeightAndCenter(heightMeters, new Vector3(Center.x, centerYMeters, Center.z));
         }
+
+        public void SetPhysicsEnabled(bool isEnabled)
+        {
+            PhysicsCollider.enabled = isEnabled;
+        }
+
+        public int OverlapNonAlloc(Collider[] overlapResults, LayerMask collisionMask, QueryTriggerInteraction queryTriggerInteraction)
+        {
+            return OverlapAtPoseNonAlloc(
+                PhysicsCollider.transform.position,
+                PhysicsCollider.transform.rotation,
+                overlapResults,
+                collisionMask,
+                queryTriggerInteraction);
+        }
+
+        public abstract int OverlapAtPoseNonAlloc(
+            Vector3 worldPosition,
+            Quaternion worldRotation,
+            Collider[] overlapResults,
+            LayerMask collisionMask,
+            QueryTriggerInteraction queryTriggerInteraction);
 
         #endregion
 

@@ -9,9 +9,9 @@ namespace PhysicsCharacterController
         private const int MAX_OVERLAP_COUNT = 32;
 
         [Header("Colliders")]
-        [SerializeField] private CapsuleCollider _uprightCollider;
+        [SerializeField] private CharacterColliderShape _uprightCollider;
         [SerializeField] private Transform _underwaterColliderPivot;
-        [SerializeField] private CapsuleCollider _underwaterCollider;
+        [SerializeField] private CharacterColliderShape _underwaterCollider;
         [SerializeField] private PhysicsMaterial _swimmingPhysicsMaterial;
 
         [Header("Collision")]
@@ -21,10 +21,9 @@ namespace PhysicsCharacterController
         [SerializeField] private Rigidbody _rigidbody;
 
         private readonly Collider[] _overlapResults = new Collider[MAX_OVERLAP_COUNT];
-        private readonly SwimmingCapsuleGeometryCalculator _geometryCalculator = new();
         private readonly SwimmingColliderRotationSolver _rotationSolver = new();
 
-        public bool IsActive => _underwaterCollider.enabled;
+        public bool IsActive => _underwaterCollider.IsPhysicsEnabled;
         public Vector3 AcceptedDirection => _underwaterColliderPivot.forward;
         public Quaternion AcceptedRotation => _underwaterColliderPivot.rotation;
 
@@ -32,9 +31,9 @@ namespace PhysicsCharacterController
 
         private void Awake()
         {
-            _underwaterCollider.sharedMaterial = _swimmingPhysicsMaterial;
-            _underwaterCollider.enabled = false;
-            _uprightCollider.enabled = true;
+            _underwaterCollider.PhysicsCollider.sharedMaterial = _swimmingPhysicsMaterial;
+            _underwaterCollider.SetPhysicsEnabled(false);
+            _uprightCollider.SetPhysicsEnabled(true);
         }
 
         #endregion
@@ -46,9 +45,7 @@ namespace PhysicsCharacterController
             Vector3 activationDirection = worldDirection.sqrMagnitude > Mathf.Epsilon
                 ? worldDirection.normalized
                 : transform.forward;
-            Quaternion candidateRotation = _rotationSolver.CalculateTargetRotation(
-                activationDirection,
-                transform.forward);
+            Quaternion candidateRotation = _rotationSolver.CalculateTargetRotation(activationDirection, transform.forward);
 
             if (!IsColliderPoseClear(_underwaterCollider, candidateRotation))
             {
@@ -56,8 +53,8 @@ namespace PhysicsCharacterController
             }
 
             _underwaterColliderPivot.rotation = candidateRotation;
-            _uprightCollider.enabled = false;
-            _underwaterCollider.enabled = true;
+            _uprightCollider.SetPhysicsEnabled(false);
+            _underwaterCollider.SetPhysicsEnabled(true);
             return true;
         }
 
@@ -68,9 +65,7 @@ namespace PhysicsCharacterController
                 return false;
             }
 
-            Quaternion targetRotation = _rotationSolver.CalculateTargetRotation(
-                worldDirection,
-                _underwaterColliderPivot.up);
+            Quaternion targetRotation = _rotationSolver.CalculateTargetRotation(worldDirection, _underwaterColliderPivot.up);
             Quaternion candidateRotation = Quaternion.RotateTowards(
                 _underwaterColliderPivot.rotation,
                 targetRotation,
@@ -92,13 +87,13 @@ namespace PhysicsCharacterController
                 return true;
             }
 
-            if (!IsColliderPoseClear(_uprightCollider, _uprightCollider.transform.rotation))
+            if (!IsColliderPoseClear(_uprightCollider))
             {
                 return false;
             }
 
-            _underwaterCollider.enabled = false;
-            _uprightCollider.enabled = true;
+            _underwaterCollider.SetPhysicsEnabled(false);
+            _uprightCollider.SetPhysicsEnabled(true);
             return true;
         }
 
@@ -106,25 +101,26 @@ namespace PhysicsCharacterController
 
         #region Private Methods
 
-        private bool IsColliderPoseClear(CapsuleCollider capsuleCollider, Quaternion candidateRotation)
+        private bool IsColliderPoseClear(CharacterColliderShape colliderShape)
         {
-            SwimmingCapsuleGeometry geometry = _geometryCalculator.Calculate(
-                capsuleCollider.transform.position,
-                candidateRotation,
-                capsuleCollider.transform.lossyScale,
-                capsuleCollider.center,
-                capsuleCollider.height,
-                capsuleCollider.radius,
-                capsuleCollider.direction);
+            int overlapCount = colliderShape.OverlapNonAlloc(_overlapResults, _solidCollisionMask, QueryTriggerInteraction.Ignore);
+            return AreOverlapsClear(overlapCount);
+        }
 
-            int overlapCount = Physics.OverlapCapsuleNonAlloc(
-                geometry.PointA,
-                geometry.PointB,
-                geometry.RadiusMeters,
+        private bool IsColliderPoseClear(CharacterColliderShape colliderShape, Quaternion candidateRotation)
+        {
+            int overlapCount = colliderShape.OverlapAtPoseNonAlloc(
+                colliderShape.PhysicsCollider.transform.position,
+                candidateRotation,
                 _overlapResults,
                 _solidCollisionMask,
                 QueryTriggerInteraction.Ignore);
 
+            return AreOverlapsClear(overlapCount);
+        }
+
+        private bool AreOverlapsClear(int overlapCount)
+        {
             for (int overlapIndex = 0; overlapIndex < overlapCount; overlapIndex++)
             {
                 Collider overlap = _overlapResults[overlapIndex];
@@ -138,9 +134,7 @@ namespace PhysicsCharacterController
 
             if (overlapCount == MAX_OVERLAP_COUNT)
             {
-                Debug.LogWarning(
-                    $"Swimming collider clearance for '{name}' filled the overlap buffer; treating the candidate pose as blocked.",
-                    this);
+                Debug.LogWarning($"Swimming collider clearance for '{name}' filled the overlap buffer; treating the candidate pose as blocked.", this);
                 return false;
             }
 
