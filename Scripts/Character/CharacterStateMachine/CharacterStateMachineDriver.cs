@@ -19,7 +19,7 @@ namespace PhysicsCharacterController.CharacterStateMachine
         [SerializeField] private CharacterGravity _characterGravity;
         [SerializeField] private GroundChecker _groundChecker;
         [SerializeField] private BaseCharacterInput _input;
-        [SerializeField] private CharacterRotation _characterRotation;
+        [SerializeField] private CharacterRotationPolicy _characterRotationPolicy;
         [SerializeField] private CharacterWaterSensor _waterSensor;
         [SerializeField] private CharacterSwimmingMovement _swimmingMovement;
         [SerializeField] private CharacterAnimator _characterAnimator;
@@ -54,7 +54,7 @@ namespace PhysicsCharacterController.CharacterStateMachine
             _characterGravity = GetComponent<CharacterGravity>();
             _groundChecker = GetComponent<GroundChecker>();
             _input = GetComponent<BaseCharacterInput>();
-            _characterRotation = GetComponent<CharacterRotation>();
+            _characterRotationPolicy = GetComponentInParent<CharacterRotationPolicy>();
             _waterSensor = GetComponent<CharacterWaterSensor>();
             _swimmingMovement = GetComponent<CharacterSwimmingMovement>();
         }
@@ -68,7 +68,7 @@ namespace PhysicsCharacterController.CharacterStateMachine
                 _characterGravity,
                 _groundChecker,
                 _input,
-                _characterRotation,
+                _characterRotationPolicy,
                 _waterSensor,
                 _swimmingMovement,
                 _characterAnimator,

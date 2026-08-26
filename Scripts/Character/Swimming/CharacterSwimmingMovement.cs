@@ -11,6 +11,7 @@ namespace PhysicsCharacterController
         [SerializeField] private CharacterWaterSensor _waterSensor;
         [SerializeField] private BaseCharacterInput _input;
         [SerializeField] private CharacterRotation _characterRotation;
+        [SerializeField] private CharacterRotationPolicy _characterRotationPolicy;
         [SerializeField] private Rigidbody _rigidbody;
         [SerializeField] private UnderwaterSwimmingCollider _underwaterCollider;
         [SerializeField] private CharacterSwimmingVisualOrientation _visualOrientation;
@@ -76,8 +77,8 @@ namespace PhysicsCharacterController
             Vector2 movementInput = _input.GetMoveInput();
             RequestedDirection = _motionSolver.CalculateSurfaceDirection(
                 movementInput,
-                _characterRotation.CameraTransform.forward,
-                _characterRotation.CameraTransform.right);
+                _characterRotationPolicy.MovementForwardDirection,
+                _characterRotationPolicy.MovementRightDirection);
 
             float speedMetersPerSecond = ResolveRequestedSpeedMetersPerSecond();
             Vector3 targetVelocity = _motionSolver.CalculateSurfaceTargetVelocity(
@@ -149,8 +150,8 @@ namespace PhysicsCharacterController
         {
             return _motionSolver.CalculateUnderwaterDirection(
                 movementInput,
-                _characterRotation.CameraTransform.forward,
-                _characterRotation.CameraTransform.right);
+                _characterRotationPolicy.MovementForwardDirection,
+                _characterRotationPolicy.MovementRightDirection);
         }
 
         private float ResolveRequestedSpeedMetersPerSecond()

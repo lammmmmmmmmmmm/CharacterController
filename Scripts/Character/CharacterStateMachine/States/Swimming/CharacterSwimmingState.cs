@@ -51,7 +51,7 @@ namespace PhysicsCharacterController.CharacterStateMachine.States
         protected override void OnExit()
         {
             _context.Input.SetTerrestrialActionsEnabled(true);
-            _context.CharacterRotation.SetAutomaticRotationEnabled(true);
+            _context.CharacterRotationPolicy.SetAutomaticRotationEnabled(true);
             _context.SwimmingMovement.ResetMovement();
         }
 

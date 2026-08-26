@@ -85,6 +85,7 @@ GameObject:
   - component: {fileID: 4769975595707810438}
   - component: {fileID: 8362966048400329051}
   - component: {fileID: 6566680108622118817}
+  - component: {fileID: 5025576076879093293}
   m_Layer: 0
   m_Name: Character Controller
   m_TagString: Untagged
@@ -404,10 +405,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fc9b0e28ddc8715409443999323395dd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _input: {fileID: 1978479410493231783}
-  _characterCamera: {fileID: 0}
-  _characterParent: {fileID: 4091744628385212224}
-  _rotationSmoothingDurationSeconds: 0.1
+  _turnSpeedDegreesPerSecond: 540
 --- !u!114 &5436775728411592474
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -426,7 +424,7 @@ MonoBehaviour:
   _characterGravity: {fileID: 8884444090963779118}
   _groundChecker: {fileID: 5381384936787526104}
   _input: {fileID: 1978479410493231783}
-  _characterRotation: {fileID: 8137631592807362314}
+  _characterRotationPolicy: {fileID: 5025576076879093293}
   _waterSensor: {fileID: 8346789935785575982}
   _swimmingMovement: {fileID: 4769975595707810438}
   _characterAnimator: {fileID: 9031743307242274759}
@@ -489,6 +487,7 @@ MonoBehaviour:
   _waterSensor: {fileID: 8346789935785575982}
   _input: {fileID: 1978479410493231783}
   _characterRotation: {fileID: 8137631592807362314}
+  _characterRotationPolicy: {fileID: 5025576076879093293}
   _rigidbody: {fileID: 7698808979737546365}
   _underwaterCollider: {fileID: 8362966048400329051}
   _visualOrientation: {fileID: 6566680108622118817}
@@ -527,6 +526,21 @@ MonoBehaviour:
   _meshTransform: {fileID: 3564097700261540322}
   _swimmingRotationSharpness: 8
   _uprightRotationSharpness: 6
+--- !u!114 &5025576076879093293
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4091744628385212224}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c4e1b571d7427f04c9e799eb1dfacbff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: PhysicsCharacterController.Runtime::PhysicsCharacterController.PlayerCharacterRotationPolicy
+  _characterRotation: {fileID: 8137631592807362314}
+  _input: {fileID: 1978479410493231783}
+  _characterCamera: {fileID: 0}
 --- !u!1 &5891816821523033180
 GameObject:
   m_ObjectHideFlags: 0

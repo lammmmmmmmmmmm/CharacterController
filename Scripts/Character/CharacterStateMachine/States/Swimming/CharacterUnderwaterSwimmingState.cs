@@ -30,7 +30,7 @@ namespace PhysicsCharacterController.CharacterStateMachine.States
 
         protected override void OnEnter()
         {
-            _context.CharacterRotation.SetAutomaticRotationEnabled(false);
+            _context.CharacterRotationPolicy.SetAutomaticRotationEnabled(false);
             _context.Animator.SetBase(
                 _context.UnderwaterSwimmingAnimationData.LocomotionMixer,
                 _context.UnderwaterSwimmingStateId,
@@ -39,7 +39,7 @@ namespace PhysicsCharacterController.CharacterStateMachine.States
 
         protected override void OnExit()
         {
-            _context.CharacterRotation.SetAutomaticRotationEnabled(true);
+            _context.CharacterRotationPolicy.SetAutomaticRotationEnabled(true);
         }
 
         protected override void OnFixedUpdate(float fixedDeltaTime)

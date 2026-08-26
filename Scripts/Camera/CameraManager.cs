@@ -11,7 +11,7 @@ namespace PhysicsCharacterController
         [SerializeField] private CinemachineCamera _firstPersonCamera;
         [SerializeField] private CinemachineCamera _thirdPersonCamera;
         [SerializeField] private Camera _mainCamera;
-        [SerializeField] private CharacterRotation _characterRotation;
+        [SerializeField] private PlayerCharacterRotationPolicy _playerCharacterRotationPolicy;
 
         [Header("First Person Settings")]
         [SerializeField] private LayerMask _firstPersonMask;
@@ -95,7 +95,7 @@ namespace PhysicsCharacterController
 
         private void ActivateThirdPersonCamera()
         {
-            _characterRotation.SetLockedToCamera(false);
+            _playerCharacterRotationPolicy.SetLockedToCamera(false);
 
             _firstPersonCamera.gameObject.SetActive(false);
             _thirdPersonCamera.gameObject.SetActive(true);
@@ -108,7 +108,7 @@ namespace PhysicsCharacterController
 
         private void ActivateFirstPersonCamera()
         {
-            _characterRotation.SetLockedToCamera(true);
+            _playerCharacterRotationPolicy.SetLockedToCamera(true);
 
             _firstPersonCamera.gameObject.SetActive(true);
             _thirdPersonCamera.gameObject.SetActive(false);

@@ -24,7 +24,7 @@ namespace PhysicsCharacterController.CharacterStateMachine.States
 
         protected override void OnEnter()
         {
-            _context.CharacterRotation.SetAutomaticRotationEnabled(true);
+            _context.CharacterRotationPolicy.SetAutomaticRotationEnabled(true);
             _context.Animator.SetBase(
                 _context.SurfaceSwimmingAnimationData.LocomotionMixer,
                 _context.SurfaceSwimmingStateId,

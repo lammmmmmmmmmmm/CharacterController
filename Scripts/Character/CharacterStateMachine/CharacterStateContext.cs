@@ -8,7 +8,7 @@ namespace PhysicsCharacterController.CharacterStateMachine
         public CharacterGravity CharacterGravity { get; }
         public GroundChecker GroundChecker { get; }
         public BaseCharacterInput Input { get; }
-        public CharacterRotation CharacterRotation { get; }
+        public CharacterRotationPolicy CharacterRotationPolicy { get; }
         public CharacterWaterSensor WaterSensor { get; }
         public CharacterSwimmingMovement SwimmingMovement { get; }
         public CharacterAnimator Animator { get; }
@@ -30,7 +30,7 @@ namespace PhysicsCharacterController.CharacterStateMachine
             CharacterGravity characterGravity,
             GroundChecker groundChecker,
             BaseCharacterInput input,
-            CharacterRotation characterRotation,
+            CharacterRotationPolicy characterRotationPolicy,
             CharacterWaterSensor waterSensor,
             CharacterSwimmingMovement swimmingMovement,
             CharacterAnimator animator,
@@ -51,7 +51,7 @@ namespace PhysicsCharacterController.CharacterStateMachine
             CharacterGravity = characterGravity;
             GroundChecker = groundChecker;
             Input = input;
-            CharacterRotation = characterRotation;
+            CharacterRotationPolicy = characterRotationPolicy;
             WaterSensor = waterSensor;
             SwimmingMovement = swimmingMovement;
             Animator = animator;
